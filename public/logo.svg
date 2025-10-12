@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="500" height="500" viewBox="0 0 500 500" xml:space="preserve">
+<desc>Created with Fabric.js 3.6.3</desc>
+<defs>
+</defs>
+<g transform="matrix(9.675959846662533 0 0 9.675959846662533 250.00000000000003 250)"  >
+<linearGradient id="SVGID_56008" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1 0 0 1 26 24)"  x1="0" y1="0" x2="48" y2="50">
+<stop offset="0%" style="stop-color:rgb(219,0,0);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(36,0,0);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_56008); fill-rule: nonzero; opacity: 1;"  transform=" translate(-50, -49)" d="M 49.4 37.6 h -5 V 24 h 5 V 37.6 z M 55.7 24 h -5 v 13.6 h 5 V 24 z M 62 24 h -5 v 5.9 h 5 V 24 z M 43.1 24 H 38 v 13.6 h 5.1 V 24 z M 65.6 31.8 v 5.2 c 3 3.5 4.8 8.1 4.8 13.1 c 0 7.7 -4.2 14.3 -10.5 17.8 L 61 64 l -7 -16 h 8 V 31.2 h -5 v 8 H 38 v 27.3 c -5.1 -3.7 -8.4 -9.7 -8.4 -16.5 c 0 -5 1.8 -9.5 4.8 -13.1 v -5.2 C 29.3 36.2 26 42.7 26 50 c 0 13.3 10.7 24 24 24 s 24 -10.7 24 -24 C 74 42.7 70.7 36.2 65.6 31.8 z" stroke-linecap="round" />
+</g>
+</svg>
+
