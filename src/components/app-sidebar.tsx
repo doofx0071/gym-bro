@@ -51,7 +51,7 @@ const menuItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
-  const { user, authUser } = useUser()
+  const { user } = useUser()
   const router = useRouter()
   const supabase = createClient()
 
@@ -65,15 +65,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="cursor-pointer h-auto py-3 group-data-[collapsible=icon]:py-8">
+            <SidebarMenuButton size="lg" asChild className="cursor-pointer h-auto py-3">
               <Link href="/dashboard" className="cursor-pointer">
-                <div className="flex aspect-square items-center justify-center size-12 group-data-[collapsible=icon]:size-24">
+                <div className="flex aspect-square items-center justify-center size-8">
                   <Image
                     src="/logo.svg"
                     alt="Gym Bro"
-                    width={48}
-                    height={96}
-                    className="w-12 h-12 group-data-[collapsible=icon]:w-24 group-data-[collapsible=icon]:h-24 object-contain"
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 object-contain"
                   />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
@@ -118,13 +118,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="cursor-pointer">
-                  <div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <User className="size-5" />
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <User className="size-4" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Account</span>
+                    <span className="truncate font-semibold">
+                      {authUser?.user_metadata?.firstName && authUser?.user_metadata?.lastName
+                        ? `${authUser.user_metadata.firstName} ${authUser.user_metadata.lastName}`
+                        : 'Account'}
+                    </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {user?.primaryGoal ? user.primaryGoal.replace('-', ' ') : 'Manage account'}
+                      {authUser?.email || 'Manage account'}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />

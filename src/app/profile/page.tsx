@@ -17,7 +17,24 @@ export default function ProfilePage() {
     }
   }, [user, isLoading, router])
 
-  if (isLoading || !user) {
+  if (isLoading) {
+    return (
+      <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-20 md:pb-8">
+        <div className="mb-8">
+          <div className="h-9 w-48 bg-muted-foreground/20 rounded animate-pulse mb-2" />
+          <div className="h-5 w-64 bg-muted-foreground/20 rounded animate-pulse" />
+        </div>
+        <div className="max-w-4xl space-y-6">
+          <div className="h-64 w-full bg-muted-foreground/20 rounded-lg animate-pulse" />
+          <div className="h-48 w-full bg-muted-foreground/20 rounded-lg animate-pulse" />
+          <div className="h-64 w-full bg-muted-foreground/20 rounded-lg animate-pulse" />
+          <div className="h-48 w-full bg-muted-foreground/20 rounded-lg animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
     return null
   }
 
@@ -57,16 +74,19 @@ export default function ProfilePage() {
 
   return (
     <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-20 md:pb-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold mb-2">Your Profile</h2>
-        <p className="text-muted-foreground">
-          View and manage your fitness profile
-        </p>
-      </div>
+      <FadeIn>
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold mb-2">Your Profile</h2>
+          <p className="text-muted-foreground">
+            View and manage your fitness profile
+          </p>
+        </div>
+      </FadeIn>
 
       <div className="max-w-4xl space-y-6">
         {/* Physical Metrics */}
-        <Card>
+        <FadeIn delay={0.1}>
+          <Card>
             <CardHeader>
               <CardTitle>Physical Metrics</CardTitle>
               <CardDescription>Your body measurements</CardDescription>
@@ -92,9 +112,11 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
+        </FadeIn>
 
         {/* Fitness Goals */}
-        <Card>
+        <FadeIn delay={0.2}>
+          <Card>
             <CardHeader>
               <CardTitle>Fitness Goals</CardTitle>
               <CardDescription>Your fitness objectives and level</CardDescription>
@@ -122,9 +144,11 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
+        </FadeIn>
 
         {/* Calculated Metrics */}
-        <Card>
+        <FadeIn delay={0.3}>
+          <Card>
             <CardHeader>
               <CardTitle>Calculated Metrics</CardTitle>
               <CardDescription>Your personalized nutrition targets</CardDescription>
@@ -167,10 +191,12 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
+        </FadeIn>
 
         {/* Dietary Preferences */}
         {(user.dietaryPreference || user.allergies) && (
-          <Card>
+          <FadeIn delay={0.4}>
+            <Card>
               <CardHeader>
                 <CardTitle>Dietary Preferences</CardTitle>
                 <CardDescription>Your dietary restrictions and preferences</CardDescription>
@@ -198,6 +224,7 @@ export default function ProfilePage() {
                 )}
               </CardContent>
             </Card>
+          </FadeIn>
         )}
       </div>
     </div>
