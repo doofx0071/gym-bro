@@ -4,6 +4,7 @@
 **Version:** 1.0.0
 **Status:** ✅ Production Ready
 **GitHub:** https://github.com/doofx0071/gym-bro
+**Repository:** doofx0071/gym-bro
 
 ---
 
