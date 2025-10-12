@@ -51,7 +51,7 @@ const menuItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
-  const { user } = useUser()
+  const { user, authUser } = useUser()
   const router = useRouter()
   const supabase = createClient()
 
