@@ -51,7 +51,7 @@ const menuItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
-  const { user } = useUser()
+  const { user, authUser } = useUser()
   const router = useRouter()
   const supabase = createClient()
 
@@ -118,17 +118,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="cursor-pointer">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground group-data-[collapsible=icon]:size-8">
-                    <User className="size-4 group-data-[collapsible=icon]:size-4" />
+                  <div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <User className="size-5" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">
-                      {authUser?.user_metadata?.firstName && authUser?.user_metadata?.lastName
-                        ? `${authUser.user_metadata.firstName} ${authUser.user_metadata.lastName}`
-                        : 'Account'}
-                    </span>
+                    <span className="truncate font-semibold">Account</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {authUser?.email || 'Manage account'}
+                      {user?.primaryGoal ? user.primaryGoal.replace('-', ' ') : 'Manage account'}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
