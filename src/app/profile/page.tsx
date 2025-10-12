@@ -74,19 +74,16 @@ export default function ProfilePage() {
 
   return (
     <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-20 md:pb-8">
-      <FadeIn>
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Your Profile</h2>
-          <p className="text-muted-foreground">
-            View and manage your fitness profile
-          </p>
-        </div>
-      </FadeIn>
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold mb-2">Your Profile</h2>
+        <p className="text-muted-foreground">
+          View and manage your fitness profile
+        </p>
+      </div>
 
       <div className="max-w-4xl space-y-6">
         {/* Physical Metrics */}
-        <FadeIn delay={0.1}>
-          <Card>
+        <Card>
             <CardHeader>
               <CardTitle>Physical Metrics</CardTitle>
               <CardDescription>Your body measurements</CardDescription>
@@ -112,11 +109,9 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-        </FadeIn>
 
         {/* Fitness Goals */}
-        <FadeIn delay={0.2}>
-          <Card>
+        <Card>
             <CardHeader>
               <CardTitle>Fitness Goals</CardTitle>
               <CardDescription>Your fitness objectives and level</CardDescription>
@@ -144,11 +139,9 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-        </FadeIn>
 
         {/* Calculated Metrics */}
-        <FadeIn delay={0.3}>
-          <Card>
+        <Card>
             <CardHeader>
               <CardTitle>Calculated Metrics</CardTitle>
               <CardDescription>Your personalized nutrition targets</CardDescription>
@@ -191,12 +184,10 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-        </FadeIn>
 
         {/* Dietary Preferences */}
         {(user.dietaryPreference || user.allergies) && (
-          <FadeIn delay={0.4}>
-            <Card>
+          <Card>
               <CardHeader>
                 <CardTitle>Dietary Preferences</CardTitle>
                 <CardDescription>Your dietary restrictions and preferences</CardDescription>
@@ -224,7 +215,6 @@ export default function ProfilePage() {
                 )}
               </CardContent>
             </Card>
-          </FadeIn>
         )}
       </div>
     </div>
