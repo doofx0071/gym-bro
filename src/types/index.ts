@@ -195,6 +195,7 @@ export interface UserContextType {
   updateUser: (profile: Partial<UserProfile>) => Promise<void>
   generateMealPlan: () => Promise<void>
   generateWorkoutPlan: () => Promise<void>
+  refreshAuthState: () => Promise<void>
 
   // State
   isLoading: boolean

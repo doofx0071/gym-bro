@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useUser } from '@/contexts/user-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -29,6 +30,7 @@ interface AuthFormProps extends React.ComponentProps<'div'> {
 
 export function AuthForm({ className, initialMode = 'login', ...props }: AuthFormProps) {
   const router = useRouter()
+  const { refreshAuthState } = useUser()
   const [mode, setMode] = useState<AuthMode>(initialMode)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -113,7 +115,6 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
 
     setIsLoading(true)
     const result = await verifyOtp(email, otp)
-    console.log('🔐 Verification result from server:', result)
 
     if (result?.error) {
       toast.error(result.error)
@@ -123,8 +124,11 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
 
     if (result?.success) {
       toast.success('Successfully logged in!')
-      console.log('🎉 Redirecting to:', result.redirectTo)
-      // Redirect based on the result (onboarding for new users, dashboard for existing users)
+      
+      // Use the context method to refresh auth state
+      await refreshAuthState()
+      
+      // Give the auth context time to update before redirecting
       setTimeout(() => {
         if (result.redirectTo) {
           router.push(result.redirectTo)
@@ -132,7 +136,7 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
           // Fallback to onboarding if no redirect specified
           router.push('/onboarding')
         }
-      }, 500) // Standard delay for UI feedback
+      }, 500) // Short delay to ensure auth context is updated
     }
     
     setIsLoading(false)

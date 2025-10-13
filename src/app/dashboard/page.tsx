@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,29 +15,38 @@ export default function DashboardPage() {
   const router = useRouter()
   const { user, authUser, mealPlan, workoutPlan, isLoading } = useUser()
   const hasRedirected = useRef(false)
+  const [authInitialized, setAuthInitialized] = useState(false)
+
+  // Wait for auth to fully initialize before making redirect decisions
+  useEffect(() => {
+    // Give the auth context time to load the session
+    const timer = setTimeout(() => {
+      setAuthInitialized(true)
+    }, 500) // Wait 0.5 seconds for auth to stabilize
+
+    return () => clearTimeout(timer)
+  }, [])
 
   // Redirect to onboarding if user is authenticated but hasn't completed onboarding
   useEffect(() => {
-    if (!isLoading && !hasRedirected.current) {
+    // Only proceed if loading is complete AND auth has had time to initialize
+    if (!isLoading && authInitialized && !hasRedirected.current) {
       hasRedirected.current = true
-      console.log('Dashboard state:', { authUser: !!authUser, user: !!user, isLoading })
+      
       // If user is logged in but has no profile, they need onboarding
       if (authUser && !user) {
-        console.log('User is authenticated but needs onboarding - redirecting')
         setTimeout(() => {
           router.push("/onboarding")
         }, 100)
       } else if (!authUser) {
         // Not logged in at all - redirect to login
-        console.log('User not authenticated - redirecting to login')
         setTimeout(() => {
           router.push("/auth/login")
         }, 100)
-      } else {
-        console.log('User is authenticated and has profile - staying on dashboard')
       }
+      // If both authUser and user exist, stay on dashboard (no action needed)
     }
-  }, [authUser, user, isLoading, router])
+  }, [authUser, user, isLoading, router, authInitialized])
 
   if (isLoading) {
     return (

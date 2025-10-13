@@ -29,21 +29,39 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({})
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sessionRefreshed, setSessionRefreshed] = useState(false)
 
   const supabase = createClient()
 
   // Listen to auth state changes
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setAuthUser(session?.user ?? null)
-      setIsLoading(false)
-    })
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Auth session error:', error)
+          setAuthUser(null)
+          setIsLoading(false)
+          return
+        }
+
+        setAuthUser(session?.user ?? null)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Auth initialization failed:', error)
+        setAuthUser(null)
+        setIsLoading(false)
+      }
+    }
+
+    initializeAuth()
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setAuthUser(session?.user ?? null)
     })
 
@@ -133,6 +151,24 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const updateOnboardingData = useCallback((data: Partial<OnboardingData>) => {
     setOnboardingData(prev => ({ ...prev, ...data }))
   }, [])
+
+  const refreshAuthState = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const { data: { session }, error } = await supabase.auth.refreshSession()
+      if (error) {
+        console.error('Auth refresh error:', error)
+        setAuthUser(null)
+      } else {
+        setAuthUser(session?.user ?? null)
+      }
+    } catch (error) {
+      console.error('Auth refresh failed:', error)
+      setAuthUser(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [supabase])
 
   const completeOnboarding = useCallback(async () => {
     setIsLoading(true)
@@ -384,6 +420,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     updateUser,
     generateMealPlan,
     generateWorkoutPlan,
+    refreshAuthState,
     isLoading,
     error,
   }
