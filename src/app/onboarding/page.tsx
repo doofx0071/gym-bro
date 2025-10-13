@@ -41,14 +41,10 @@ export default function OnboardingStart() {
     )
   }
 
-  // User is loaded but has no profile - show onboarding (this is correct)
-  if (!user) {
-    // This should not happen because the auth flow should handle this
-    // But if it does, we'll show onboarding
-    return null
-  }
-
-  return (
+  // Show onboarding content when user is authenticated but has no profile
+  if (!user && authUser) {
+    // User is authenticated but needs to complete onboarding - show the form
+    return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4">
@@ -170,6 +166,14 @@ export default function OnboardingStart() {
       <p className="text-center text-xs text-muted-foreground mt-8">
         By continuing, you agree to consult with a healthcare professional before starting any new fitness or nutrition program.
       </p>
+    </div>
+    )
+  }
+
+  // Fallback for any other cases - show loading or redirect
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
   )
 }
