@@ -10,18 +10,41 @@ import { useUser } from "@/contexts/user-context"
 
 export default function OnboardingStart() {
   const router = useRouter()
-  const { user, isLoading } = useUser()
+  const { user, authUser, isLoading } = useUser()
   const hasRedirected = useRef(false)
 
-  // Redirect to dashboard if user already has a profile
+  // Redirect to dashboard if user already has a profile, or to login if not authenticated
   useEffect(() => {
-    if (!isLoading && user && !hasRedirected.current) {
+    if (!isLoading && !hasRedirected.current) {
       hasRedirected.current = true
-      router.push("/dashboard")
+      console.log('Onboarding state:', { authUser: !!authUser, user: !!user, isLoading })
+      if (user) {
+        // User has completed onboarding - redirect to dashboard
+        console.log('User has completed onboarding - redirecting to dashboard')
+        router.push("/dashboard")
+      } else if (!authUser) {
+        // Not authenticated at all - redirect to login
+        console.log('User not authenticated - redirecting to login')
+        router.push("/auth/login")
+      } else {
+        console.log('User is authenticated but needs onboarding - staying on onboarding')
+      }
+      // If authUser exists but no user profile, stay on onboarding (this is correct)
     }
-  }, [user, isLoading, router])
+  }, [authUser, user, isLoading, router])
 
   if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // User is loaded but has no profile - show onboarding (this is correct)
+  if (!user) {
+    // This should not happen because the auth flow should handle this
+    // But if it does, we'll show onboarding
     return null
   }
 
@@ -29,10 +52,10 @@ export default function OnboardingStart() {
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4">
-          Let's Get Started!
+          Let&apos;s Get Started!
         </h1>
         <p className="text-lg text-muted-foreground">
-          We'll ask you a few questions to create your personalized fitness and nutrition plans.
+          We&apos;ll ask you a few questions to create your personalized fitness and nutrition plans.
         </p>
         <p className="text-sm text-muted-foreground mt-2">
           This will only take 2-3 minutes.
@@ -111,7 +134,7 @@ export default function OnboardingStart() {
               <div>
                 <p className="font-medium">Privacy First</p>
                 <p className="text-sm text-muted-foreground">
-                  Your data stays on your device. We don't store your personal information.
+                  Your data stays on your device. We don&apos;t store your personal information.
                 </p>
               </div>
             </div>

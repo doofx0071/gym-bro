@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 
 interface UnsplashPhotoData {
   imageUrl: string
@@ -89,6 +88,7 @@ export function UnsplashPhoto({ className = '', alt = 'Gym' }: UnsplashPhotoProp
 
   return (
     <div className={`bg-muted relative ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={photoData.imageUrl}
         alt={alt}

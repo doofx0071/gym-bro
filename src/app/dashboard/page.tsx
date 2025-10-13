@@ -13,16 +13,31 @@ import Link from "next/link"
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, mealPlan, workoutPlan, isLoading } = useUser()
+  const { user, authUser, mealPlan, workoutPlan, isLoading } = useUser()
   const hasRedirected = useRef(false)
 
-  // Redirect to onboarding if no user (but wait for loading to finish)
+  // Redirect to onboarding if user is authenticated but hasn't completed onboarding
   useEffect(() => {
-    if (!isLoading && !user && !hasRedirected.current) {
+    if (!isLoading && !hasRedirected.current) {
       hasRedirected.current = true
-      router.push("/onboarding")
+      console.log('Dashboard state:', { authUser: !!authUser, user: !!user, isLoading })
+      // If user is logged in but has no profile, they need onboarding
+      if (authUser && !user) {
+        console.log('User is authenticated but needs onboarding - redirecting')
+        setTimeout(() => {
+          router.push("/onboarding")
+        }, 100)
+      } else if (!authUser) {
+        // Not logged in at all - redirect to login
+        console.log('User not authenticated - redirecting to login')
+        setTimeout(() => {
+          router.push("/auth/login")
+        }, 100)
+      } else {
+        console.log('User is authenticated and has profile - staying on dashboard')
+      }
     }
-  }, [user, isLoading, router])
+  }, [authUser, user, isLoading, router])
 
   if (isLoading) {
     return (
@@ -58,7 +73,7 @@ export default function DashboardPage() {
       <div className="mb-8">
         <h2 className="text-3xl font-bold mb-2">Welcome back! 💪</h2>
         <p className="text-muted-foreground">
-          Here's your personalized fitness and nutrition dashboard
+          Here&apos;s your personalized fitness and nutrition dashboard
         </p>
       </div>
 

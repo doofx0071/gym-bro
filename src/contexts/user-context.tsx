@@ -28,7 +28,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null)
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({})
   const [isLoading, setIsLoading] = useState(true)
-  const [isAuthChecked, setIsAuthChecked] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const supabase = createClient()
@@ -38,7 +37,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthUser(session?.user ?? null)
-      setIsAuthChecked(true)
+      setIsLoading(false)
     })
 
     // Listen for auth changes
@@ -46,7 +45,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthUser(session?.user ?? null)
-      setIsAuthChecked(true)
     })
 
     return () => subscription.unsubscribe()
@@ -54,11 +52,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   // Load data from database on mount
   useEffect(() => {
-    // Wait for auth check to complete
-    if (!isAuthChecked) {
-      return
-    }
-
     if (!authUser) {
       // Clear data if no auth user
       setUser(null)
@@ -130,7 +123,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadUserData()
-  }, [authUser, isAuthChecked, supabase])
+  }, [authUser, supabase])
 
   // Save onboarding data to localStorage (temporary until completed)
   useEffect(() => {
@@ -278,7 +271,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Update in database
-      const updateData: any = {
+      const updateData: Record<string, string | number | string[] | undefined> = {
         height: updatedUser.height,
         weight: updatedUser.weight,
         age: updatedUser.age,

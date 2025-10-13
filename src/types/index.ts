@@ -1,4 +1,5 @@
 // User Profile Types
+import type { User } from '@supabase/supabase-js'
 
 export type Gender = 'male' | 'female' | 'other' | 'prefer-not-to-say'
 
@@ -182,7 +183,7 @@ export interface OnboardingData {
 
 export interface UserContextType {
   // Auth user from Supabase
-  authUser: any | null // Supabase User type
+  authUser: User | null // Supabase User type
   user: UserProfile | null
   mealPlan: MealPlan | null
   workoutPlan: WorkoutPlan | null

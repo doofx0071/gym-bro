@@ -153,7 +153,7 @@ export default function DietaryPreferencesPage() {
                       </RadioGroup>
                     </FormControl>
                     <FormDescription>
-                      We'll create meal plans that match your dietary preferences
+                      We&apos;ll create meal plans that match your dietary preferences
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -197,7 +197,7 @@ export default function DietaryPreferencesPage() {
                   </div>
                 )}
                 <p className="text-sm text-muted-foreground">
-                  We'll exclude these ingredients from your meal plans
+                  We&apos;ll exclude these ingredients from your meal plans
                 </p>
               </div>
 

@@ -26,6 +26,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useUser } from "@/contexts/user-context"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
@@ -51,7 +57,7 @@ const menuItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
-  const { user, authUser } = useUser()
+  const { authUser } = useUser()
   const router = useRouter()
   const supabase = createClient()
 
@@ -61,19 +67,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar collapsible="icon" className="hidden md:flex" {...props}>
+    <TooltipProvider>
+      <Sidebar collapsible="icon" className="hidden md:flex" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="cursor-pointer h-auto py-3">
+            <SidebarMenuButton size="lg" asChild className="cursor-pointer h-auto py-3 group-data-[collapsible=icon]:py-4">
               <Link href="/dashboard" className="cursor-pointer">
-                <div className="flex aspect-square items-center justify-center size-8">
+                <div className="flex aspect-square items-center justify-center size-12 group-data-[collapsible=icon]:size-8">
                   <Image
                     src="/logo.svg"
                     alt="Gym Bro"
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 object-contain"
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 object-contain group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8"
                   />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
@@ -102,7 +109,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     className="cursor-pointer h-11 text-base"
                   >
                     <Link href={item.url}>
-                      <item.icon className="size-5" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <item.icon className="size-5" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          {item.title}
+                        </TooltipContent>
+                      </Tooltip>
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -123,12 +137,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
-                      {authUser?.user_metadata?.firstName && authUser?.user_metadata?.lastName
-                        ? `${authUser.user_metadata.firstName} ${authUser.user_metadata.lastName}`
-                        : 'Account'}
+                      {authUser?.user_metadata?.first_name && authUser?.user_metadata?.last_name
+                        ? `${authUser.user_metadata.first_name} ${authUser.user_metadata.last_name}`
+                        : 'Full Name'}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {authUser?.email || 'Manage account'}
+                      {authUser?.email || 'user@example.com'}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
@@ -167,6 +181,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+    </TooltipProvider>
   )
 }
 

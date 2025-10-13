@@ -21,15 +21,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress"
 import { UnitToggle } from "@/components/onboarding/unit-toggle"
 import { useUser } from "@/contexts/user-context"
-import type { Units, Gender } from "@/types"
+import type { Units } from "@/types"
 import {
   cmToFeetInches,
   feetInchesToCm,
   kgToLbs,
   lbsToKg,
-  validateHeight,
-  validateWeight,
-  validateAge,
 } from "@/lib/calculations"
 import Link from "next/link"
 
@@ -134,7 +131,7 @@ export default function PhysicalMetricsPage() {
                 <FormField
                   control={form.control}
                   name="preferredUnits"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
                       <FormControl>
                         <UnitToggle

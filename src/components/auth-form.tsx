@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,7 @@ import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { login, signup, verifyOtp, resendOtp } from '@/app/auth/actions'
 import Link from 'next/link'
+import { UnsplashPhoto } from '@/components/unsplash-photo'
 
 type AuthMode = 'login' | 'register' | 'otp' | 'forgot-password'
 
@@ -35,35 +36,6 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
-  const [imageUrl, setImageUrl] = useState('/placeholder.svg')
-
-  // Fetch random gym image ONCE per session (not on mode change)
-  useEffect(() => {
-    const fetchImage = async () => {
-      // Check if we already have an image in sessionStorage
-      const cachedImage = sessionStorage.getItem('auth_gym_image')
-      if (cachedImage) {
-        setImageUrl(cachedImage)
-        return
-      }
-
-      // Fetch new image only if not cached
-      try {
-        const keywords = ['gym', 'gym bro', 'fitness', 'workout', 'bodybuilding']
-        const keyword = keywords[Math.floor(Math.random() * keywords.length)]
-        const response = await fetch(`/api/unsplash?keyword=${encodeURIComponent(keyword)}`)
-        const data = await response.json()
-        if (data.imageUrl) {
-          setImageUrl(data.imageUrl)
-          // Cache the image URL in sessionStorage
-          sessionStorage.setItem('auth_gym_image', data.imageUrl)
-        }
-      } catch (error) {
-        console.error('Error fetching image:', error)
-      }
-    }
-    fetchImage()
-  }, []) // Empty dependency array - only runs once on mount
 
   // Handle login
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
@@ -137,8 +109,18 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
 
     if (result?.success) {
       toast.success('Successfully logged in!')
-      router.push('/dashboard')
+      // Redirect based on the result (onboarding for new users, dashboard for existing users)
+      setTimeout(() => {
+        if (result.redirectTo) {
+          router.push(result.redirectTo)
+        } else {
+          // Fallback to onboarding if no redirect specified
+          router.push('/onboarding')
+        }
+      }, 1000) // Increased delay to allow session to fully establish
     }
+    
+    setIsLoading(false)
   }
 
   // Handle resend OTP
@@ -158,9 +140,6 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
   async function handleForgotPassword(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
-
-    const formData = new FormData(event.currentTarget)
-    const emailValue = formData.get('email') as string
 
     // TODO: Implement forgot password logic
     toast.info('Password reset link sent to your email')
@@ -515,10 +494,9 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
 
           {/* Right Side - Image */}
           <div className="bg-muted relative hidden md:block">
-            <img
-              src={imageUrl}
-              alt="Gym"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.7]"
+            <UnsplashPhoto 
+              className="h-full w-full"
+              alt="Gym fitness workout"
             />
           </div>
         </CardContent>

@@ -114,7 +114,7 @@ export default function FitnessGoalsPage() {
                 render={({ field }) => (
                   <FormItem className="space-y-3">
                     <FormLabel className="text-lg font-semibold">
-                      What's your current fitness level?
+                      What&apos;s your current fitness level?
                     </FormLabel>
                     <FormControl>
                       <RadioGroup
@@ -157,7 +157,7 @@ export default function FitnessGoalsPage() {
                 render={({ field }) => (
                   <FormItem className="space-y-3">
                     <FormLabel className="text-lg font-semibold">
-                      What's your primary fitness goal?
+                      What&apos;s your primary fitness goal?
                     </FormLabel>
                     <FormControl>
                       <RadioGroup
@@ -192,7 +192,7 @@ export default function FitnessGoalsPage() {
                       </RadioGroup>
                     </FormControl>
                     <FormDescription>
-                      We'll adjust your calorie target and macros based on your goal
+                      We&apos;ll adjust your calorie target and macros based on your goal
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -37,13 +37,17 @@ export async function login(formData: FormData) {
     password: formData.get('password') as string,
   }
 
+  // First validate credentials
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
     return { error: error.message }
   }
 
-  // After successful login, send OTP
+  // If credentials are valid, sign them out and send OTP
+  await supabase.auth.signOut()
+
+  // Send OTP for verification
   const { error: otpError } = await supabase.auth.signInWithOtp({
     email: data.email,
     options: {
@@ -61,7 +65,7 @@ export async function login(formData: FormData) {
 export async function verifyOtp(email: string, token: string) {
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.verifyOtp({
+  const { error, data } = await supabase.auth.verifyOtp({
     email,
     token,
     type: 'email',
@@ -71,8 +75,27 @@ export async function verifyOtp(email: string, token: string) {
     return { error: error.message }
   }
 
+  // Check if user has completed onboarding by looking for their profile
+  if (data?.user) {
+    const { data: profileData, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('auth_user_id', data.user.id)
+      .single()
+
+    if (profileError && profileError.code === 'PGRST116') {
+      // No profile found - user needs onboarding
+      revalidatePath('/', 'layout')
+      return { success: true, redirectTo: '/onboarding' }
+    } else if (profileData) {
+      // Profile exists - user has completed onboarding
+      revalidatePath('/', 'layout')
+      return { success: true, redirectTo: '/dashboard' }
+    }
+  }
+
   revalidatePath('/', 'layout')
-  return { success: true }
+  return { success: true, redirectTo: '/dashboard' }
 }
 
 export async function resendOtp(email: string) {
