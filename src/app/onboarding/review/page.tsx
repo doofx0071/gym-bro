@@ -295,14 +295,13 @@ export default function ReviewPage() {
 
         {/* Submit Button */}
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-          <Button type="button" variant="outline" className="flex-1 cursor-pointer" size="lg" asChild>
+          <Button type="button" variant="outline" className="flex-1 cursor-pointer" asChild>
             <Link href="/onboarding/dietary">Back</Link>
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={submitting || isLoading}
             className="flex-1 cursor-pointer"
-            size="lg"
           >
             {submitting || isLoading ? (
               <>
