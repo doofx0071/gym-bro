@@ -80,8 +80,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
+    // Prevent multiple concurrent requests
+    let isCancelled = false
+
     const loadUserData = async () => {
+      if (isCancelled) return
+      
       setIsLoading(true)
+      setError(null)
+      
       try {
         // Load user profile from database
         const { data: profileData, error: profileError } = await supabase
@@ -89,6 +96,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           .select('*')
           .eq('auth_user_id', authUser.id)
           .single()
+
+        if (isCancelled) return
 
         if (profileError) {
           if (profileError.code === 'PGRST116') {
@@ -99,13 +108,27 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             if (storedOnboarding) {
               setOnboardingData(JSON.parse(storedOnboarding))
             }
+            setUser(null)
             setIsLoading(false)
             return
           }
-          throw profileError
+          
+          // Log detailed error info for debugging
+          console.error('Database error:', {
+            code: profileError.code,
+            message: profileError.message,
+            details: profileError.details,
+            hint: profileError.hint
+          })
+          
+          // Don't throw for user experience - handle gracefully
+          setError(`Database error: ${profileError.message}`)
+          setUser(null)
+          setIsLoading(false)
+          return
         }
 
-        if (profileData) {
+        if (profileData && !isCancelled) {
           const userProfile: UserProfile = {
             id: profileData.id,
             createdAt: new Date(profileData.created_at),
@@ -132,15 +155,26 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           }
           setUser(userProfile)
         }
-        setIsLoading(false)
+        
+        if (!isCancelled) {
+          setIsLoading(false)
+        }
       } catch (err) {
-        console.error('Error loading user data:', err)
-        setError('Failed to load user data')
-        setIsLoading(false)
+        if (!isCancelled) {
+          console.error('Unexpected error loading user data:', err)
+          setError('Failed to load user data')
+          setUser(null)
+          setIsLoading(false)
+        }
       }
     }
 
     loadUserData()
+
+    // Cleanup function to cancel request if component unmounts or authUser changes
+    return () => {
+      isCancelled = true
+    }
   }, [authUser, supabase])
 
   // Save onboarding data to localStorage (temporary until completed)
