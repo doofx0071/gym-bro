@@ -135,4 +135,3 @@ export async function resetPassword(email: string) {
 
   return { success: true, message: 'Password reset email sent!' }
 }
-

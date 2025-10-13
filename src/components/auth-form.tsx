@@ -37,6 +37,13 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
 
+  // Handle OTP input to allow only numbers
+  const handleOTPChange = (value: string) => {
+    // Only allow numbers, remove any letters or symbols
+    const numericValue = value.replace(/[^0-9]/g, '')
+    setOtp(numericValue)
+  }
+
   // Handle login
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -98,8 +105,15 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
       return
     }
 
+    // Additional validation to ensure OTP contains only numbers
+    if (!/^\d{8}$/.test(otp)) {
+      toast.error('OTP must contain only numbers')
+      return
+    }
+
     setIsLoading(true)
     const result = await verifyOtp(email, otp)
+    console.log('🔐 Verification result from server:', result)
 
     if (result?.error) {
       toast.error(result.error)
@@ -109,6 +123,7 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
 
     if (result?.success) {
       toast.success('Successfully logged in!')
+      console.log('🎉 Redirecting to:', result.redirectTo)
       // Redirect based on the result (onboarding for new users, dashboard for existing users)
       setTimeout(() => {
         if (result.redirectTo) {
@@ -117,7 +132,7 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
           // Fallback to onboarding if no redirect specified
           router.push('/onboarding')
         }
-      }, 1000) // Increased delay to allow session to fully establish
+      }, 500) // Standard delay for UI feedback
     }
     
     setIsLoading(false)
@@ -407,7 +422,7 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
                     <InputOTP
                       maxLength={8}
                       value={otp}
-                      onChange={(value) => setOtp(value)}
+                      onChange={handleOTPChange}
                       disabled={isLoading}
                       className="cursor-pointer"
                     >
@@ -423,7 +438,7 @@ export function AuthForm({ className, initialMode = 'login', ...props }: AuthFor
                       </InputOTPGroup>
                     </InputOTP>
                     <p className="text-xs text-muted-foreground">
-                      Enter the 8-digit code from your email
+                      Enter the 8-digit numeric code from your email
                     </p>
                   </div>
                   <Field>
