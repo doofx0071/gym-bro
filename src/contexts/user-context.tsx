@@ -90,29 +90,37 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setError(null)
       
       try {
-        // Load user profile from database
+        // Load user profile from database - use maybeSingle to handle missing profiles
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
-          .select('*')
+          .select(`
+            id,
+            created_at,
+            updated_at,
+            height,
+            weight,
+            age,
+            gender,
+            fitness_level,
+            primary_goal,
+            activity_level,
+            dietary_preference,
+            allergies,
+            meals_per_day,
+            preferred_units,
+            bmr,
+            tdee,
+            target_calories,
+            macros_protein,
+            macros_carbs,
+            macros_fats
+          `)
           .eq('auth_user_id', authUser.id)
-          .single()
+          .maybeSingle()
 
         if (isCancelled) return
 
         if (profileError) {
-          if (profileError.code === 'PGRST116') {
-            // No profile found - user needs to complete onboarding
-            console.log('No profile found, user needs onboarding')
-            // Load onboarding data from localStorage if exists
-            const storedOnboarding = localStorage.getItem(STORAGE_KEYS.ONBOARDING)
-            if (storedOnboarding) {
-              setOnboardingData(JSON.parse(storedOnboarding))
-            }
-            setUser(null)
-            setIsLoading(false)
-            return
-          }
-          
           // Log detailed error info for debugging
           console.error('Database error:', {
             code: profileError.code,
@@ -121,8 +129,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             hint: profileError.hint
           })
           
-          // Don't throw for user experience - handle gracefully
+          // Handle gracefully - don't crash the app
           setError(`Database error: ${profileError.message}`)
+          setUser(null)
+          setIsLoading(false)
+          return
+        }
+
+        // Handle the case where no profile exists (profileData is null)
+        if (!profileData) {
+          console.log('No profile found, user needs onboarding')
+          // Load onboarding data from localStorage if exists
+          const storedOnboarding = localStorage.getItem(STORAGE_KEYS.ONBOARDING)
+          if (storedOnboarding) {
+            setOnboardingData(JSON.parse(storedOnboarding))
+          }
           setUser(null)
           setIsLoading(false)
           return
