@@ -4,7 +4,8 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 **Project:** Gym Bro - AI-powered fitness and nutrition companion  
 **Repository:** https://github.com/doofx0071/gym-bro  
-**Status:** Production Ready (as of January 2025)
+**Status:** Production Ready (as of January 2025)  
+**Last Updated:** January 13, 2025
 
 ## Tech Stack
 
@@ -38,6 +39,7 @@ npm run typecheck   # TypeScript check (tsc --noEmit)
 - `/dashboard` - Main user dashboard with stats and plans
 - `/profile` - User profile display
 - `/settings` - Settings with dark mode, notifications, security
+- `/not-found` - Custom 404 page with Gym Bro branding and auth-aware navigation
 
 ### Key Files & Architecture
 
@@ -77,15 +79,22 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## Database Schema (Supabase)
 
 **Tables with RLS enabled:**
-- `user_profiles` - Core user data (height, weight, age, gender, fitness level, goals, calculated metrics)
-- `meal_plans` - JSON meal plans per user
-- `workout_plans` - JSON workout plans per user
+- `user_profiles` - Core user data with NOT NULL constraints on auth_user_id
+- `meal_plans` - JSON meal plans per user with foreign key constraints
+- `workout_plans` - JSON workout plans per user with foreign key constraints
 
 **Key columns in user_profiles:**
-- Physical: `height`, `weight`, `age`, `gender`
+- Physical: `height_cm`, `weight_kg`, `age`, `gender`
 - Fitness: `fitness_level`, `primary_goal`, `activity_level`  
 - Dietary: `dietary_preference`, `allergies`, `meals_per_day`
-- Calculated: `bmr`, `tdee`, `target_calories`, `macros_protein/carbs/fats`
+- Calculated: `bmr`, `tdee`, `target_calories`, `macros` (JSONB)
+- Constraints: `auth_user_id` NOT NULL UNIQUE, proper foreign keys
+
+**Recent Schema Fixes:**
+- ✅ Fixed column naming consistency (height_cm vs height)
+- ✅ Added NOT NULL constraints on critical fields
+- ✅ Implemented proper RLS policies for all tables
+- ✅ Fixed 406 API errors by using explicit column selects
 
 ## Architecture Highlights
 
@@ -180,6 +189,9 @@ vercel env pull .env.local
 ✅ **Unsplash integration** with proper attribution and download tracking  
 ✅ **BMR/TDEE calculations** using Mifflin-St Jeor equation  
 ✅ **TypeScript throughout** with strict mode and comprehensive type definitions  
+✅ **Custom 404 page** with Gym Bro branding and contextual navigation  
+✅ **Complete database schema** with RLS policies and proper constraints  
+✅ **Error handling improvements** in user context with retry loop prevention  
 
 ## Documentation
 
