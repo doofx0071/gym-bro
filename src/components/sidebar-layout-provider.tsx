@@ -12,8 +12,8 @@ const sidebarPages = [
   '/dashboard',
   '/profile', 
   '/settings',
-  '/workout-plan',
-  '/meal-plan'
+  '/workout-plans',
+  '/meal-plans'
 ]
 
 interface SidebarLayoutProviderProps {
@@ -40,8 +40,8 @@ export function SidebarLayoutProvider({ children }: SidebarLayoutProviderProps) 
               {pathname.startsWith('/dashboard') && 'Dashboard'}
               {pathname.startsWith('/profile') && 'Profile'}
               {pathname.startsWith('/settings') && 'Settings'}
-              {pathname.startsWith('/workout-plan') && 'Workout Plan'}
-              {pathname.startsWith('/meal-plan') && 'Meal Plan'}
+              {pathname.startsWith('/workout-plans') && 'Workout Plans'}
+              {pathname.startsWith('/meal-plans') && 'Meal Plans'}
             </h1>
           </div>
         </header>

@@ -14,12 +14,12 @@ const navItems = [
   },
   {
     title: "Workouts",
-    url: "/workout-plan",
+    url: "/workout-plans",
     icon: Dumbbell,
   },
   {
     title: "Meals",
-    url: "/meal-plan",
+    url: "/meal-plans",
     icon: Utensils,
   },
   {

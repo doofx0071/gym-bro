@@ -1,6 +1,23 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Custom Fonts */
+@font-face {
+  font-family: 'Quotes Script';
+  src: url('/fonts/QuotesScriptW01-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brice Bold';
+  src: url('/fonts/brice-bold-semiexpanded.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -237,6 +254,14 @@
 
   .font-bebas {
     font-family: var(--font-bebas);
+  }
+
+  .font-quotes-script {
+    font-family: 'Quotes Script', cursive;
+  }
+
+  .font-brice-bold {
+    font-family: 'Brice Bold', sans-serif;
   }
 }
 

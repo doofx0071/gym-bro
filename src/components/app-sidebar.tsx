@@ -45,12 +45,12 @@ const menuItems = [
   },
   {
     title: "Workouts",
-    url: "/workout-plan",
+    url: "/workout-plans",
     icon: Dumbbell,
   },
   {
     title: "Meals",
-    url: "/meal-plan",
+    url: "/meal-plans",
     icon: Utensils,
   },
 ]
@@ -73,23 +73,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="cursor-pointer h-auto py-3 group-data-[collapsible=icon]:py-4">
-              <Link href="/dashboard" className="cursor-pointer">
-                <div className="flex aspect-square items-center justify-center size-12 group-data-[collapsible=icon]:size-8">
-                  <Image
-                    src="/logo.svg"
-                    alt="Gym Bro"
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 object-contain group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8"
-                  />
-                </div>
-                <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate text-lg font-bebas text-black dark:text-white">
-                    GYM BRO
-                  </span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    AI Fitness Companion
-                  </span>
+              <Link href="/dashboard" className="cursor-pointer flex items-center justify-center w-full">
+                <div className="flex flex-col items-center justify-center group-data-[collapsible=icon]:flex-row group-data-[collapsible=icon]:gap-0">
+                  <div className="flex aspect-square items-center justify-center size-12 group-data-[collapsible=icon]:size-8 mb-2 group-data-[collapsible=icon]:mb-0">
+                    <Image
+                      src="/logo.svg"
+                      alt="Gym Bro"
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 object-contain group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8"
+                    />
+                  </div>
+                  <div className="grid text-center group-data-[collapsible=icon]:hidden leading-tight">
+                    <span className="truncate text-2xl text-black dark:text-white flex items-center justify-center gap-1">
+                      <span className="font-quotes-script">Gym</span>
+                      <span className="font-brice-bold">BRO</span>
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      AI Fitness Companion
+                    </span>
+                  </div>
                 </div>
               </Link>
             </SidebarMenuButton>

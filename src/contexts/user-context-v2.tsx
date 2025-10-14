@@ -9,64 +9,114 @@ import type {
   OnboardingData,
   UserContextType,
 } from '@/types'
-import { calculateAllMetrics } from '@/lib/calculations'
+// import { calculateAllMetrics } from '@/lib/calculations'
 import { createClient } from '@/lib/supabase/client'
 
+const UserContext = createContext<UserContextType | undefined>(undefined)
+
 // Enhanced UserProvider with auth state synchronization
-export function UserProvider({ children }: { children }: { children: React.ReactNode }) {
+export function UserProvider({ children }: { children: React.ReactNode }) {
   const [authUser, setAuthUser] = useState<User | null>(null)
-  const [user, setUser] = useState<UserProfile | null>(null)
-  const [mealPlan, setMealPlan] = useState<MealPlan | null>(null)
-  const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null)
+  const [user] = useState<UserProfile | null>(null)
+  const [mealPlan] = useState<MealPlan | null>(null)
+  const [workoutPlan] = useState<WorkoutPlan | null>(null)
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({})
-  // Auto-refresh auth context every 5 seconds
-  
-  // Enhanced auth state synchronization logic
-  const { authUser, setAuthUser } = useAuthSync()
-  
-  const [
-    data,
-    subscription,
-  ] 
-    //  console.log('📊 Auth state changed:', { hasSession: !!data?.session })
-  ] = supabase.auth.auth.onAuthStateChange(async (_event, session) => {
-      console.log('🔐 Auth state callback data:', { hasSession: !!data?.session, hasAuthSession })
-      const newUser = session?.user ?? null
-      const oldUser = authUser
-      
-      // Handle authentication state synchronization
-      if (newUser && !oldUser) {
-        console.log('🔄 User logged in, but user context not updated')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error] = useState<string | null>(null)
+
+  const supabase = createClient()
+
+  // Listen to auth state changes
+  useEffect(() => {
+    // Get initial session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
         
-        // Refresh user context
-        try {
-          const { userProfile } = await supabase
-            .from('user_profiles')
-            .select('*') 
-            .eq('auth_user_id', newUser.id)
-            .single()
-          } finally {
-            setUser(session?.user || null)
-            console.log('✅ User context from database:', !!session?.user ? 'Updated' : 'Missing user data')
-          }
+        if (error) {
+          console.error('Auth session error:', error)
+          setAuthUser(null)
+          setIsLoading(false)
+          return
         }
-        const authUserSession = session?.session?.session || null
-        if (authUserSession) {
-          console.log('🔐 Creating refreshed auth session context')
-          router.refresh('/')
-        }
+
+        setAuthUser(session?.user ?? null)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Auth initialization failed:', error)
+        setAuthUser(null)
+        setIsLoading(false)
       }
     }
-  }, [data.subscription, supabase.auth, authUser, user, isLoading])
-  return (
-    <UserProvider value={value}>
-      {children}
-    </UserProvider>
-  )
-}
-```
 
-Also let me update the imports to match what the export pattern in the auth-form component:
-<tool_call>Edit
-<arg_key>file_path</arg_key>
-<arg_value>C:\Users\crist\documents\doof codings\gym-bro\src\components\auth-form.tsx
+    initializeAuth()
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 Auth state changed:', event, !!session)
+      setAuthUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
+
+  // Enhanced auth sync logic can be added here if needed
+  // For now, this is a simplified working version
+
+  const updateOnboardingData = useCallback((data: Partial<OnboardingData>) => {
+    setOnboardingData(prev => ({ ...prev, ...data }))
+  }, [])
+
+  const completeOnboarding = useCallback(async () => {
+    // Implementation would go here - similar to user-context.tsx
+    console.log('Completing onboarding...', onboardingData)
+  }, [onboardingData])
+
+  const updateUser = useCallback(async (profile: Partial<UserProfile>) => {
+    // Implementation would go here - similar to user-context.tsx
+    console.log('Updating user...', profile)
+  }, [])
+
+  const generateMealPlan = useCallback(async () => {
+    // Implementation would go here
+    console.log('Generating meal plan...')
+  }, [])
+
+  const generateWorkoutPlan = useCallback(async () => {
+    // Implementation would go here
+    console.log('Generating workout plan...')
+  }, [])
+
+  const refreshAuthState = useCallback(async () => {
+    // Implementation would go here
+    console.log('Refreshing auth state...')
+  }, [])
+
+  const value: UserContextType = {
+    authUser,
+    user,
+    mealPlan,
+    workoutPlan,
+    onboardingData,
+    updateOnboardingData,
+    completeOnboarding,
+    updateUser,
+    generateMealPlan,
+    generateWorkoutPlan,
+    refreshAuthState,
+    isLoading,
+    error,
+  }
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>
+}
+
+export function useUser() {
+  const context = useContext(UserContext)
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider')
+  }
+  return context
+}

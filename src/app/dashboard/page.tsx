@@ -182,7 +182,7 @@ export default function DashboardPage() {
                 </div>
                 <Separator />
                 <Button className="w-full cursor-pointer" asChild>
-                  <Link href="/meal-plan">View Meal Plan</Link>
+                  <Link href="/meal-plans">View Meal Plan</Link>
                 </Button>
               </div>
             ) : (
@@ -191,7 +191,7 @@ export default function DashboardPage() {
                   Get a personalized 7-day meal plan with recipes, ingredients, and nutrition info.
                 </p>
                 <Button className="w-full cursor-pointer" asChild>
-                  <Link href="/generate-meal-plan">
+                  <Link href="/meal-plans/new">
                     <Utensils className="h-4 w-4 mr-2" />
                     Generate Meal Plan
                   </Link>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
                 </div>
                 <Separator />
                 <Button className="w-full cursor-pointer" asChild>
-                  <Link href="/workout-plan">View Workout Plan</Link>
+                  <Link href="/workout-plans">View Workout Plan</Link>
                 </Button>
               </div>
             ) : (
@@ -235,7 +235,7 @@ export default function DashboardPage() {
                   Get a personalized workout routine tailored to your fitness level and goals.
                 </p>
                 <Button className="w-full cursor-pointer" asChild>
-                  <Link href="/generate-workout">
+                  <Link href="/workout-plans/new">
                     <Dumbbell className="h-4 w-4 mr-2" />
                     Generate Workout Plan
                   </Link>

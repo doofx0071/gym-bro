@@ -125,10 +125,13 @@ Welcome to the **gym-bro** project documentation! This folder contains comprehen
 - **UI Library:** shadcn/ui (New York style)
 - **Icons:** Lucide React
 - **Bundler:** Turbopack
+- **AI Services:** Groq (Llama 3.1 8B) + Mistral AI (Small 2503)
+- **Database:** Supabase (PostgreSQL)
+- **Auth:** Supabase Auth
 
 ---
 
-## 📁 Project Structure
+## 📱 Project Structure
 
 ```
 gym-bro/
@@ -136,8 +139,11 @@ gym-bro/
 │   ├── app/              # Next.js App Router
 │   ├── components/       # Custom components
 │   │   └── ui/          # shadcn/ui components
-│   ├── lib/             # Utilities
-│   └── hooks/           # Custom hooks
+│   ├── contexts/        # React contexts (user state)
+│   ├── lib/             # Utilities & AI services
+│   │   └── ai.ts        # AI integration (Groq + Mistral)
+│   ├── hooks/           # Custom hooks
+│   └── examples/        # AI usage examples
 ├── public/              # Static assets
 ├── mds/                 # Documentation (you are here!)
 └── [config files]       # Various configuration files
@@ -174,7 +180,46 @@ npx shadcn@latest add dialog sheet drawer popover tooltip
 
 ---
 
-## 🎯 Development Commands
+## 🤖 AI Services Integration
+
+### Dual AI Setup
+- **Groq AI**: Ultra-fast inference (llama-3.1-8b-instant)
+- **Mistral AI**: High-quality responses (mistral-small-2503)
+- **Auto-fallback**: If one service fails, automatically uses the other
+
+### Environment Variables
+```bash
+# Add to .env.local
+GROQ_API_KEY=your_groq_api_key_here
+MISTRAL_API_KEY=your_mistral_api_key_here
+GROQ_MODEL=llama-3.1-8b-instant
+MISTRAL_MODEL=mistral-small-2503
+```
+
+### Usage Examples
+```typescript
+import { callAI, callGroq, callMistral } from '@/lib/ai'
+
+// Quick response (uses Groq for speed)
+const quickTip = await callGroq([
+  { role: 'user', content: 'Give me a 30-second workout tip' }
+])
+
+// Detailed response (uses Mistral for quality)
+const detailedPlan = await callMistral([
+  { role: 'system', content: 'You are a fitness expert' },
+  { role: 'user', content: 'Create a detailed workout plan' }
+])
+
+// Smart fallback (tries Groq first, falls back to Mistral)
+const smartResponse = await callAI([
+  { role: 'user', content: 'Best exercises for strength?' }
+])
+```
+
+---
+
+## 🎆 Development Commands
 
 ```bash
 # Development
@@ -255,13 +300,14 @@ All colors are defined in `src/app/globals.css` using CSS variables.
 
 ## 📊 Project Statistics
 
-- **Total Source Files:** 4
-- **Configuration Files:** 6
+- **Total Source Files:** 25+
+- **Configuration Files:** 8
 - **Documentation Files:** 5
-- **Lines of Code:** ~270
-- **Dependencies:** 17 packages
+- **Lines of Code:** ~2,500+
+- **Dependencies:** 24 packages (including AI SDKs)
 - **Framework Version:** Next.js 15.5.4
 - **React Version:** 19.1.0
+- **AI Services:** 2 integrated (Groq + Mistral)
 
 ---
 
@@ -289,19 +335,43 @@ All colors are defined in `src/app/globals.css` using CSS variables.
 
 ## 📅 Documentation Maintenance
 
-**Last Updated:** 2025-10-11  
+**Last Updated:** 2025-10-13  
 **Created By:** Augment Agent  
-**Project Version:** 0.1.0
+**Project Version:** 0.2.0 (AI Integration Complete)
 
 ---
 
-## 🎯 Next Steps
+## 🔧 Recent Updates & Fixes (October 2025)
+
+### ✅ AI Integration Completed
+- **Dual AI Setup**: Groq + Mistral AI with automatic fallback
+- **Type-Safe Integration**: Full TypeScript support with proper error handling
+- **Usage Examples**: Complete examples in `src/examples/ai-usage.ts`
+- **Environment Configuration**: Simple .env.local setup
+
+### ✅ Bug Fixes Completed
+- **TypeScript Errors**: Fixed all compilation errors in user contexts and hooks
+- **Linting Issues**: Resolved all ESLint warnings and errors
+- **Build System**: Successful production build with all optimizations
+- **Type Safety**: Enhanced AI library with proper content type handling
+- **Context Management**: Fixed circular imports and unused variables
+
+### ✅ Build Status
+- **TypeScript Check**: ✅ Passing (`npx tsc --noEmit`)
+- **ESLint Check**: ✅ Passing (`npm run lint`)
+- **Production Build**: ✅ Successful (`npm run build`)
+- **AI Services**: ✅ Tested and working
+
+---
+
+## 🎆 Next Steps
 
 1. **Explore the documentation** - Read through each guide
 2. **Install components** - Add the components you need
 3. **Create your first page** - Build a custom page
 4. **Customize the theme** - Adjust colors and styles
-5. **Build features** - Start developing your gym app!
+5. **Build AI features** - Use the integrated AI services
+6. **Build features** - Start developing your gym app!
 
 ---
 

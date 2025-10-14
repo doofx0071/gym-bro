@@ -4,8 +4,8 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 **Project:** Gym Bro - AI-powered fitness and nutrition companion  
 **Repository:** https://github.com/doofx0071/gym-bro  
-**Status:** Production Ready (as of January 2025)  
-**Last Updated:** January 13, 2025
+**Status:** Production Ready + AI Integration Complete (as of October 2025)  
+**Last Updated:** October 13, 2025
 
 ## Tech Stack
 
@@ -16,6 +16,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 - **Shadcn UI** (New York style) + Magic UI components
 - **Supabase** (Auth, Postgres, Storage)
 - **Unsplash API** for fitness images
+- **AI Services** - Mistral AI (mistral-large-latest for plan generation)
 
 ## Common Commands
 
@@ -60,6 +61,11 @@ npm run typecheck   # TypeScript check (tsc --noEmit)
 - `src/lib/calculations.ts` - BMR, TDEE, macro calculations using Mifflin-St Jeor equation
 - `src/app/api/unsplash/` - Unsplash API proxy endpoints
 
+**AI Integration:**
+- `src/lib/ai.ts` - Dual AI service integration (Groq + Mistral)
+- `src/examples/ai-usage.ts` - Complete AI usage examples
+- `src/hooks/use-auth-sync.tsx` - Enhanced auth synchronization hooks
+
 ## Environment Setup
 
 Create `.env.local`:
@@ -71,6 +77,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 
 # Unsplash (required)
 NEXT_PUBLIC_UNSPLASH_ACCESS_KEY=your_unsplash_access_key
+
+# AI Services (required for AI features)
+GROQ_API_KEY=your_groq_api_key_here  # Optional - used as fallback
+MISTRAL_API_KEY=your_mistral_api_key_here  # Required for plan generation
+GROQ_MODEL=llama-3.1-8b-instant
+MISTRAL_MODEL=mistral-large-latest
 
 # Optional
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -192,6 +204,37 @@ vercel env pull .env.local
 ✅ **Custom 404 page** with Gym Bro branding and contextual navigation  
 ✅ **Complete database schema** with RLS policies and proper constraints  
 ✅ **Error handling improvements** in user context with retry loop prevention  
+✅ **AI Integration Complete** - Dual AI setup with Groq + Mistral AI services
+
+## Recent Updates (October 2025)
+
+### ✅ Phase 2: AI Plan Generation Complete (October 14, 2025)
+- **Meal Plan Generation**: AI-powered Filipino meal plans using Mistral AI with JSON mode
+- **Workout Plan Generation**: AI-powered workout plans using Mistral AI with JSON mode
+- **Background Processing**: Async generation with status polling for better UX
+- **Filipino Focus**: Comprehensive prompts for authentic Filipino dishes and ingredients
+- **Robust Error Handling**: Nullable fields, proper validation, and graceful failures
+- **Status Tracking**: Real-time generation status (generating, completed, failed)
+
+### ✅ AI Services Integration
+- **Primary Provider**: Mistral AI (mistral-large-latest) for plan generation with JSON mode
+- **Fallback Provider**: Groq (llama-3.1-8b-instant) for speed when Mistral unavailable
+- **Type-Safe Integration**: Full TypeScript support with proper error handling
+- **JSON Response Format**: Native JSON mode eliminates parsing errors
+- **Usage Examples**: Complete implementation examples in `src/examples/ai-usage.ts`
+
+### ✅ Bug Fixes & Code Quality
+- **TypeScript Errors**: Fixed all compilation errors in contexts and hooks
+- **ESLint Issues**: Resolved all linting warnings and errors
+- **Build System**: Successful production build (4.8s compile time)
+- **Context Management**: Fixed circular imports and unused variables
+- **Type Safety**: Enhanced AI library with proper content type handling
+
+### ✅ Build Status
+- **TypeScript Check**: ✅ Passing (`npx tsc --noEmit`)
+- **ESLint Check**: ✅ Passing (`npm run lint`)
+- **Production Build**: ✅ Successful (`npm run build`)
+- **AI Services**: ✅ Tested and working with real API keys
 
 ## Documentation
 
@@ -202,6 +245,29 @@ See `mds/` folder for detailed documentation:
 
 ---
 
-**Status:** Production Ready  
-**Last Updated:** January 2025  
-**Next Phase:** AI meal plan and workout plan generation
+**Status:** Production Ready + Phase 2 Complete (AI Plan Generation Live)  
+**Last Updated:** October 14, 2025  
+**Next Phase:** UI enhancements for plan viewing, editing, and regeneration
+
+## AI Usage Quick Start
+
+```typescript
+// Import AI functions
+import { callAI, callGroq, callMistral } from '@/lib/ai'
+
+// Quick fitness tip (Groq for speed)
+const tip = await callGroq([
+  { role: 'user', content: 'Give me a quick workout tip' }
+])
+
+// Detailed workout plan (Mistral for quality)
+const plan = await callMistral([
+  { role: 'system', content: 'You are a certified personal trainer' },
+  { role: 'user', content: 'Create a 30-minute full-body workout' }
+])
+
+// Smart fallback (tries Groq first, falls back to Mistral)
+const advice = await callAI([
+  { role: 'user', content: 'How to build muscle effectively?' }
+])
+```

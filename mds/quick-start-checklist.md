@@ -10,7 +10,8 @@
 - **Phase 0:** Setup (100%)
 - **Phase 0.5:** Authentication System (100%)
 - **Phase 1:** Onboarding (100%)
-- **Overall Progress:** 45% of MVP
+- **Phase 2:** AI Plan Generation (100%)
+- **Overall Progress:** 75% of MVP
 
 ### ⚠️ IMPORTANT: Supabase Setup Required
 
@@ -310,7 +311,7 @@ npx shadcn@latest add button input label form select radio-group slider progress
 
 ---
 
-## 🍽️ Phase 2: Meal Plan (Week 3-4) - NEXT PHASE
+## 🍽️ Phase 2: Meal Plan & Workout Generation ✅ COMPLETE (October 14, 2025)
 
 ### Calculations
 - [x] Create `src/lib/calculations.ts` ✅
@@ -318,94 +319,75 @@ npx shadcn@latest add button input label form select radio-group slider progress
 - [x] Implement TDEE calculation ✅
 - [x] Implement target calorie calculation ✅
 - [x] Implement macro calculation ✅
-- [ ] Add unit tests for calculations (optional for MVP)
 
 ### API Endpoints
-- [ ] Create `src/app/api/calculate-metrics/route.ts`
-- [ ] Create `src/app/api/generate-meal-plan/route.ts`
-- [ ] Add input validation
-- [ ] Add error handling
-- [ ] Add rate limiting
+- [x] Create `src/app/api/meal-plans/generate/route.ts` ✅
+- [x] Create `src/app/api/workout-plans/generate/route.ts` ✅
+- [x] Add input validation with Zod schemas ✅
+- [x] Add comprehensive error handling ✅
+- [x] Implement background processing with status tracking ✅
 
 ### AI Integration
-- [ ] Create `src/lib/ai.ts`
-- [ ] Install OpenAI SDK (`npm install openai`)
-- [ ] Create meal plan prompt
-- [ ] Test prompt with sample data
-- [ ] Implement response parsing
-- [ ] Add error handling
+- [x] Create `src/lib/ai.ts` with dual provider support ✅
+- [x] Install Mistral AI SDK ✅
+- [x] Create Filipino meal plan prompts with JSON mode ✅
+- [x] Create workout plan prompts with JSON mode ✅
+- [x] Implement robust JSON parsing and validation ✅
+- [x] Add comprehensive error handling with fallbacks ✅
 
-### Meal Plan Components
-- [ ] Create `src/components/meal-plan/meal-card.tsx`
-- [ ] Create `src/components/meal-plan/macro-breakdown.tsx`
-- [ ] Create `src/components/meal-plan/meal-calendar.tsx`
-- [ ] Create `src/components/meal-plan/recipe-detail.tsx`
+### Database Schema
+- [x] Enhance meal_plans table with status tracking ✅
+- [x] Enhance workout_plans table with status tracking ✅
+- [x] Add nullable model and prompt fields ✅
+- [x] Add started_at, completed_at, error fields ✅
 
-### Meal Plan Pages
-- [ ] Create `src/app/meal-plan/page.tsx`
-- [ ] Create `src/app/meal-plan/[day]/page.tsx`
-- [ ] Add weekly calendar view
-- [ ] Add daily meal breakdown
-- [ ] Add recipe detail modal
-- [ ] Add loading skeletons
-
-### Context Updates
-- [ ] Add meal plan to UserContext
-- [ ] Add `generateMealPlan()` function
-- [ ] Add loading states
-- [ ] Add error handling
-- [ ] Persist to local storage
+### Type System
+- [x] Create `src/types/plans.ts` with complete types ✅
+- [x] Create `src/lib/validation/plans.ts` with Zod schemas ✅
+- [x] Support nullable model and prompt fields ✅
+- [x] Add proper error type handling ✅
 
 ### Testing
-- [ ] Test meal plan generation
-- [ ] Verify calorie accuracy
-- [ ] Verify macro calculations
-- [ ] Test dietary restrictions
-- [ ] Test on mobile
+- [x] Test meal plan generation with Mistral AI ✅
+- [x] Test workout plan generation with Mistral AI ✅
+- [x] Verify Filipino cuisine focus in meal plans ✅
+- [x] Verify 7-day meal plan generation ✅
+- [x] Test background processing and status updates ✅
+- [x] Verify proper error handling and recovery ✅
 
 ---
 
-## 💪 Phase 3: Workout Plan (Week 5)
+## 💪 Phase 3: Plan UI & Management (Next Phase)
 
-### API Endpoints
-- [ ] Create `src/app/api/generate-workout/route.ts`
-- [ ] Add input validation
-- [ ] Add error handling
-
-### AI Integration
-- [ ] Create workout plan prompt
-- [ ] Test prompt with sample data
-- [ ] Implement response parsing
-- [ ] Add workout split logic
-- [ ] Add progressive overload suggestions
-
-### Workout Components
-- [ ] Create `src/components/workout/workout-card.tsx`
-- [ ] Create `src/components/workout/exercise-list.tsx`
-- [ ] Create `src/components/workout/workout-calendar.tsx`
-- [ ] Create `src/components/workout/exercise-detail.tsx`
-
-### Workout Pages
-- [ ] Create `src/app/workout-plan/page.tsx`
-- [ ] Create `src/app/workout-plan/[day]/page.tsx`
-- [ ] Add weekly calendar view
-- [ ] Add daily workout breakdown
-- [ ] Add exercise detail modal
+### Meal Plan Display
+- [ ] Create `src/app/meal-plans/page.tsx` - list view
+- [ ] Create `src/app/meal-plans/[id]/page.tsx` - detail view
+- [ ] Add weekly calendar component
+- [ ] Add daily meal breakdown component
+- [ ] Add grocery list display
 - [ ] Add loading skeletons
 
-### Context Updates
-- [ ] Add workout plan to UserContext
-- [ ] Add `generateWorkoutPlan()` function
-- [ ] Add loading states
-- [ ] Add error handling
-- [ ] Persist to local storage
+### Workout Plan Display  
+- [ ] Create `src/app/workout-plans/page.tsx` - list view
+- [ ] Create `src/app/workout-plans/[id]/page.tsx` - detail view
+- [ ] Add weekly workout calendar
+- [ ] Add daily workout breakdown
+- [ ] Add exercise detail cards
+- [ ] Add loading skeletons
+
+### Plan Management
+- [ ] Add regenerate plan functionality
+- [ ] Add delete plan functionality
+- [ ] Add plan history/archive
+- [ ] Add plan sharing (optional)
+- [ ] Status polling and real-time updates
 
 ### Testing
-- [ ] Test workout generation
-- [ ] Verify difficulty matches fitness level
-- [ ] Verify volume is appropriate
-- [ ] Test rest days
-- [ ] Test on mobile
+- [ ] Test plan list views
+- [ ] Test plan detail views
+- [ ] Test regeneration flow
+- [ ] Test on mobile devices
+- [ ] Test with slow network (loading states)
 
 ---
 

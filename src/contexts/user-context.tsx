@@ -29,7 +29,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({})
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [sessionRefreshed, setSessionRefreshed] = useState(false)
 
   const supabase = createClient()
 
@@ -62,7 +61,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      setAuthUser(session?.user ?? null)
+      // Only trigger loading for actual auth changes, not visibility changes
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        setAuthUser(session?.user ?? null)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -76,6 +78,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setMealPlan(null)
       setWorkoutPlan(null)
       setOnboardingData({})
+      setIsLoading(false)
+      return
+    }
+
+    // Don't reload if we already have user data - simplified check
+    if (user) {
       setIsLoading(false)
       return
     }
@@ -196,6 +204,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return () => {
       isCancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser, supabase])
 
   // Save onboarding data to localStorage (temporary until completed)

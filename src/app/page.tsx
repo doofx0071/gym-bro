@@ -27,9 +27,10 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative flex flex-col items-center justify-center px-4 py-12">
         <div className="mx-auto max-w-4xl text-center">
-          {/* Gym Bro Heading with Custom Font */}
-          <h1 className="mb-6 text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bebas tracking-tight text-black dark:text-white">
-            GYM BRO
+          {/* Gym Bro Heading with Mixed Custom Fonts */}
+          <h1 className="mb-6 text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tight text-black dark:text-white flex items-center justify-center gap-2">
+            <span className="font-quotes-script">Gym</span>
+            <span className="font-brice-bold">BRO</span>
           </h1>
 
           <div className="relative mx-auto mb-8 h-32 w-32">
