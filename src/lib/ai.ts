@@ -181,6 +181,203 @@ import type { UserProfile } from '@/types'
 import type { GenerateMealPlanInput, GenerateWorkoutPlanInput, MealPlanPayload, WorkoutPlanPayload } from '@/types/plans'
 import { MealPlanPayloadSchema, WorkoutPlanPayloadSchema } from '@/lib/validation/plans'
 
+// Helper function to attempt JSON completion when response is truncated
+function completeJSON(truncatedJSON: string): string {
+  let completed = truncatedJSON
+  
+  // Count open/close braces and brackets to determine what's missing
+  let braceCount = 0
+  let bracketCount = 0
+  let inString = false
+  let escaped = false
+  
+  for (let i = 0; i < completed.length; i++) {
+    const char = completed[i]
+    
+    if (escaped) {
+      escaped = false
+      continue
+    }
+    
+    if (char === '\\') {
+      escaped = true
+      continue
+    }
+    
+    if (char === '"') {
+      inString = !inString
+      continue
+    }
+    
+    if (!inString) {
+      if (char === '{') braceCount++
+      else if (char === '}') braceCount--
+      else if (char === '[') bracketCount++
+      else if (char === ']') bracketCount--
+    }
+  }
+  
+  // Close any unclosed strings
+  if (inString) {
+    completed += '"'
+  }
+  
+  // Close any unclosed arrays
+  while (bracketCount > 0) {
+    completed += ']'
+    bracketCount--
+  }
+  
+  // Close any unclosed objects
+  while (braceCount > 0) {
+    completed += '}'
+    braceCount--
+  }
+  
+  return completed
+}
+
+// Generate a fallback 7-day meal plan with improved JSON handling
+async function generateFallbackMealPlan(
+  input: GenerateMealPlanInput,
+  profile: UserProfile,
+  userInfo: {
+    age: number;
+    gender: string;
+    weight: number;
+    height: number;
+    activityLevel: string;
+    primaryGoal: string;
+    dietaryPreference?: string;
+    allergies: string[];
+    targetCalories: number;
+    targetMacros: { protein: number; carbs: number; fats: number };
+    mealsPerDay: number;
+  },
+  preferences: {
+    goal: string;
+    cuisinePreferences: string[];
+    cookingTime: string;
+    budget: string;
+    mealPrepFriendly: boolean;
+  }
+): Promise<{ success: true; data: MealPlanPayload } | { success: false; error: string }> {
+  try {
+    console.log('Attempting fallback meal plan generation with improved handling...')
+    
+    const systemPrompt = `You are a certified nutritionist creating personalized meal plans. You must respond with valid JSON only.
+
+The JSON must exactly match this structure:
+{
+  "title": "string - descriptive plan title",
+  "goal": "string - primary goal like Weight Loss, Muscle Gain, etc",
+  "calories": number,
+  "macros": {
+    "protein": number,
+    "carbs": number, 
+    "fats": number,
+    "calories": number
+  },
+  "days": [
+    {
+      "dayIndex": number, // 0-6 (Monday-Sunday)
+      "dayLabel": "string - e.g. Monday",
+      "meals": [
+        {
+          "name": "string",
+          "timeOfDay": "string - e.g. Breakfast, Lunch, Dinner, Snack 1",
+          "calories": number,
+          "macros": { "protein": number, "carbs": number, "fats": number, "calories": number },
+          "ingredients": ["string ingredients with quantities"],
+          "instructions": ["string step by step instructions"],
+          "prepTime": number // minutes
+        }
+      ],
+      "totalCalories": number,
+      "totalMacros": { "protein": number, "carbs": number, "fats": number, "calories": number }
+    }
+  ],
+  "groceryList": []
+}`
+
+    const userPrompt = `Create a complete 7-day Filipino meal plan for:
+
+User Profile:
+- Age: ${userInfo.age}, Gender: ${userInfo.gender}
+- Weight: ${userInfo.weight}kg, Height: ${userInfo.height}cm  
+- Activity Level: ${userInfo.activityLevel}
+- Primary Goal: ${userInfo.primaryGoal}
+- Dietary Preference: ${userInfo.dietaryPreference || 'none'}
+- Allergies: ${userInfo.allergies.length > 0 ? userInfo.allergies.join(', ') : 'none'}
+
+Plan Requirements:
+- Title: ${input.title || `Filipino ${preferences.goal} Meal Plan`}
+- Daily Calories: ${userInfo.targetCalories}
+- Daily Macros: ${userInfo.targetMacros.protein}g protein, ${userInfo.targetMacros.carbs}g carbs, ${userInfo.targetMacros.fats}g fats
+- Meals per day: ${userInfo.mealsPerDay} meals EACH day (Total: ${userInfo.mealsPerDay * 7} meals for the week)
+- Cuisine Focus: FILIPINO DISHES AND FOODS ONLY
+- Include traditional Filipino dishes like Adobo, Sinigang, Pancit, Tinola, Sisig, Kare-Kare, Lumpia, etc.
+- Use authentic Filipino ingredients like coconut milk, fish sauce, soy sauce, vinegar, tamarind, kangkong, malunggay, etc.
+- Create ALL 7 UNIQUE days (Monday through Sunday) with different meals each day
+- Ensure proper nutrition balance while maintaining Filipino authenticity
+
+IMPORTANT: 
+1. Return ONLY the JSON object. No explanations, no additional text.
+2. Create 7 COMPLETE and DIFFERENT days with maximum variety
+3. Keep ingredient lists concise but complete
+4. Instructions should be brief but clear
+5. Focus on popular, authentic Filipino dishes`
+
+    const aiResponse = await callAI(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      {
+        provider: 'groq', // Try Groq first as fallback
+        temperature: 0.6,
+        max_tokens: 16000, // Full 16k tokens for complete plan
+        response_format: { type: 'json_object' },
+        fallback: true // Allow fallback to Mistral if Groq fails
+      }
+    )
+
+    console.log('Fallback plan response length:', aiResponse.content.length)
+    console.log('Fallback plan provider:', aiResponse.provider)
+    
+    let responseContent = aiResponse.content.trim()
+    
+    // More aggressive JSON completion for fallback
+    if (!responseContent.endsWith('}')) {
+      console.log('Applying JSON completion to fallback response...')
+      responseContent = completeJSON(responseContent)
+    }
+    
+    const parsed = JSON.parse(responseContent)
+    
+    // Fix grocery list if needed (we don't use it)
+    if (parsed.groceryList && !Array.isArray(parsed.groceryList)) {
+      parsed.groceryList = []
+    } else if (Array.isArray(parsed.groceryList) && parsed.groceryList.length > 0 && typeof parsed.groceryList[0] === 'string') {
+      parsed.groceryList = []
+    }
+    
+    const validationResult = MealPlanPayloadSchema.safeParse(parsed)
+    
+    if (validationResult.success) {
+      console.log('Fallback meal plan generated successfully!')
+      return { success: true, data: validationResult.data }
+    } else {
+      console.error('Fallback plan validation failed:', validationResult.error)
+      return { success: false, error: `Fallback validation failed: ${validationResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ')}` }
+    }
+  } catch (error) {
+    console.error('Fallback meal plan generation failed:', error)
+    return { success: false, error: `Fallback generation failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
+  }
+}
+
+
 // Meal Plan Generation
 export async function generateMealPlan(
   input: GenerateMealPlanInput,
@@ -289,7 +486,7 @@ IMPORTANT:
       {
         provider: 'mistral',
         temperature: 0.7,
-        max_tokens: 8000, // Increased for comprehensive meal plans
+        max_tokens: 16000, // Increased to 16k for comprehensive 7-day meal plans with full details
         response_format: { type: 'json_object' },
         fallback: false
       }
@@ -300,8 +497,17 @@ IMPORTANT:
     console.log('Raw AI Response (first 500 chars):', aiResponse.content.substring(0, 500))
     
     try {
-      // Since we're using JSON mode, parse directly
-      const parsed = JSON.parse(aiResponse.content)
+      // Check if response looks truncated
+      let responseContent = aiResponse.content.trim()
+      
+      // Try to detect and fix truncated JSON
+      if (!responseContent.endsWith('}')) {
+        console.warn('Response appears truncated, attempting to complete JSON...')
+        responseContent = completeJSON(responseContent)
+      }
+      
+      // Parse the JSON
+      const parsed = JSON.parse(responseContent)
       
       // Fix grocery list if it's not in the right format (we don't need it anyway)
       if (parsed.groceryList && !Array.isArray(parsed.groceryList)) {
@@ -321,6 +527,13 @@ IMPORTANT:
     } catch (parseError) {
       console.error('JSON Parse error:', parseError)
       console.error('Response content:', aiResponse.content.substring(0, 1000))
+      
+      // If JSON parse fails due to truncation, try generating with fallback approach
+      if (parseError instanceof SyntaxError && parseError.message.includes('Unexpected end of JSON input')) {
+        console.log('Attempting to generate meal plan with improved handling...')
+        return await generateFallbackMealPlan(input, profile, userInfo, preferences)
+      }
+      
       return { success: false, error: `JSON parse error: ${parseError instanceof Error ? parseError.message : 'Unknown error'}` }
     }
     

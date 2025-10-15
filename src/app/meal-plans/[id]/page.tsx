@@ -9,7 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, Clock, Target, Utensils } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { ArrowLeft, Clock, Target, Utensils, RefreshCw, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
@@ -23,16 +35,26 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
   const searchParams = useSearchParams()
   const { user, authUser } = useUser()
   const [plan, setPlan] = useState<MealPlanData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [authInitialized, setAuthInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
+  const [isRegenerating, setIsRegenerating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const isGenerating = searchParams.get('generating') === 'true'
+
+  // Get current day index (0 = Monday, 1 = Tuesday, ..., 6 = Sunday)
+  const getCurrentDayIndex = () => {
+    const today = new Date()
+    const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    // Convert to meal plan format (0 = Monday, 6 = Sunday)
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  }
 
   const loadPlan = useCallback(async () => {
     if (!user) return
     
     try {
-      setIsLoading(true)
       setError(null)
       
       const result = await getMealPlanByIdClient(params.id, user.id)
@@ -46,9 +68,69 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
       console.error('Failed to load meal plan:', err)
       setError('Failed to load meal plan')
     } finally {
-      setIsLoading(false)
+      setIsInitialLoad(false)
     }
   }, [user, params.id])
+
+  const handleRegenerate = async () => {
+    setIsRegenerating(true)
+    try {
+      const response = await fetch(`/api/meal-plans/${params.id}/regenerate`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate meal plan')
+      }
+
+      toast.success('Regenerating your meal plan...')
+      
+      // Update plan status locally
+      if (plan) {
+        setPlan({ ...plan, status: 'generating' })
+      }
+      
+      // Add generating query param and reload
+      router.push(`/meal-plans/${params.id}?generating=true`)
+    } catch (err) {
+      console.error('Failed to regenerate meal plan:', err)
+      toast.error('Failed to regenerate meal plan')
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/meal-plans/${params.id}/delete`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete meal plan')
+      }
+
+      toast.success('Meal plan deleted successfully')
+      
+      // Redirect to meal plans list
+      router.push('/meal-plans')
+    } catch (err) {
+      console.error('Failed to delete meal plan:', err)
+      toast.error('Failed to delete meal plan')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // Wait for auth to fully initialize before making redirect decisions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAuthInitialized(true)
+    }, 500) // Wait 0.5 seconds for auth to stabilize
+
+    return () => clearTimeout(timer)
+  }, [])
 
   // Poll for plan status if it's being generated
   useEffect(() => {
@@ -84,6 +166,9 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
   }, [isGenerating, plan, params.id, router, loadPlan])
 
   useEffect(() => {
+    // Only proceed if auth has initialized
+    if (!authInitialized) return
+
     // Only redirect if we know for sure there's no auth user and no user profile
     if (!authUser && !user) {
       router.push('/auth/login')
@@ -94,23 +179,22 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
     if (user) {
       loadPlan()
     }
-  }, [user, authUser, params.id, router, loadPlan])
+  }, [user, authUser, params.id, router, loadPlan, authInitialized])
 
-  if (isLoading) {
+  if (isInitialLoad) {
     return (
       <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-20 md:pb-8">
-        <div className="mb-8">
-          <div className="h-9 w-64 bg-muted-foreground/20 rounded animate-pulse mb-2" />
-          <div className="h-5 w-96 bg-muted-foreground/20 rounded animate-pulse" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-muted-foreground/20 rounded-lg animate-pulse" />
-          ))}
-        </div>
         <div className="space-y-6">
-          <div className="h-64 bg-muted-foreground/20 rounded-lg animate-pulse" />
-          <div className="h-96 bg-muted-foreground/20 rounded-lg animate-pulse" />
+          <div className="h-9 w-64 bg-muted-foreground/20 rounded animate-pulse" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-muted-foreground/20 rounded-lg animate-pulse" />
+            ))}
+          </div>
+          <div className="space-y-6">
+            <div className="h-64 bg-muted-foreground/20 rounded-lg animate-pulse" />
+            <div className="h-96 bg-muted-foreground/20 rounded-lg animate-pulse" />
+          </div>
         </div>
       </div>
     )
@@ -181,7 +265,7 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="cursor-pointer" asChild>
               <Link href="/meal-plans">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
@@ -195,6 +279,62 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
               </div>
             </div>
           </div>
+          
+          {/* Action Buttons - Only show for completed plans */}
+          {plan.status === 'completed' && (
+            <div className="flex items-center gap-2">
+              {/* Regenerate Button */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="cursor-pointer" disabled={isRegenerating || isDeleting}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
+                    Regenerate
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Regenerate Meal Plan?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will create a new meal plan with fresh recipes and meals. Your current plan will be replaced. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+                    <AlertDialogAction className="cursor-pointer" onClick={handleRegenerate}>
+                      Regenerate Plan
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              
+              {/* Delete Button */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="cursor-pointer" disabled={isDeleting || isRegenerating}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Meal Plan?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete your meal plan. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      className="cursor-pointer bg-destructive hover:bg-destructive/90" 
+                      onClick={handleDelete}
+                    >
+                      Delete Plan
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </div>
 
         {/* Generation Progress */}
@@ -285,55 +425,133 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
           </Card>
         )}
 
-        {/* Days */}
+        {/* Days with Tabs */}
         {plan.status === 'completed' && plan.days && plan.days.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Weekly Meal Plan</h2>
-            {plan.days.map((day) => (
-              <Card key={day.dayIndex}>
-                <CardHeader>
-                  <CardTitle>{day.dayLabel}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {day.totalCalories} calories • {day.totalMacros.protein}g protein
-                  </p>
-                </CardHeader>
-                <CardContent>
+            
+            <Tabs defaultValue={getCurrentDayIndex().toString()} className="w-full">
+              <TabsList className="inline-flex h-9 sm:h-10 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground gap-0.5 sm:gap-1 w-full overflow-x-auto scrollbar-hide">
+                {plan.days.map((day) => {
+                  const isToday = day.dayIndex === getCurrentDayIndex()
+                  return (
+                    <TabsTrigger 
+                      key={day.dayIndex} 
+                      value={day.dayIndex.toString()}
+                      className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md px-2 sm:px-3 py-1.5 sm:py-1 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow flex-1 min-w-[45px] sm:min-w-0 cursor-pointer"
+                    >
+                      <span className="hidden sm:inline">{day.dayLabel.substring(0, 3)}</span>
+                      <span className="sm:hidden">{day.dayLabel.substring(0, 1)}</span>
+                      {isToday && (
+                        <span className="ml-1 sm:ml-1.5 inline-flex items-center justify-center rounded-full bg-primary px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-primary-foreground">
+                          •
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  )
+                })}
+              </TabsList>
+              
+              {plan.days.map((day) => {
+                const isToday = day.dayIndex === getCurrentDayIndex()
+                return (
+                  <TabsContent key={day.dayIndex} value={day.dayIndex.toString()} className="space-y-4">
+                    {/* Day Header Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg sm:text-xl">{day.dayLabel}</span>
+                          {isToday && (
+                            <Badge variant="default" className="text-xs">
+                              Today
+                            </Badge>
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="self-start sm:self-auto">
+                          {day.totalCalories} cal
+                        </Badge>
+                      </CardTitle>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        {day.totalMacros.protein}g protein • {day.totalMacros.carbs}g carbs • {day.totalMacros.fats}g fats
+                      </p>
+                    </CardHeader>
+                  </Card>
+                  
+                  {/* Meals Grid */}
                   <div className="grid gap-4">
                     {day.meals.map((meal, index) => (
-                      <div key={index} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium">{meal.name}</h4>
-                          <Badge variant="outline">{meal.timeOfDay}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {meal.calories} cal • {meal.prepTime} min prep
-                        </p>
-                        
-                        <div className="space-y-2">
+                      <Card key={index}>
+                        <CardHeader>
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between sm:block">
+                                <CardTitle className="text-base sm:text-lg">{meal.name}</CardTitle>
+                                <Badge variant="outline" className="sm:hidden">{meal.timeOfDay}</Badge>
+                              </div>
+                              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                                {meal.calories} cal • {meal.prepTime} min prep
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="hidden sm:inline-flex">{meal.timeOfDay}</Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3 sm:space-y-4">
+                          {/* Macros */}
+                          <div className="grid grid-cols-3 gap-2 p-2 sm:p-3 bg-muted/50 rounded-lg">
+                            <div className="text-center">
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">Protein</p>
+                              <p className="text-sm sm:text-base font-semibold">{meal.macros.protein}g</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">Carbs</p>
+                              <p className="text-sm sm:text-base font-semibold">{meal.macros.carbs}g</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">Fats</p>
+                              <p className="text-sm sm:text-base font-semibold">{meal.macros.fats}g</p>
+                            </div>
+                          </div>
+                          
+                          {/* Ingredients */}
                           <div>
-                            <p className="text-sm font-medium">Ingredients:</p>
-                            <ul className="text-sm text-muted-foreground list-disc list-inside">
+                            <h5 className="text-sm sm:text-base font-medium mb-2 flex items-center gap-2">
+                              <Utensils className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              Ingredients
+                            </h5>
+                            <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
                               {meal.ingredients.map((ingredient, i) => (
-                                <li key={i}>{ingredient}</li>
+                                <li key={i} className="flex items-start">
+                                  <span className="mr-2">•</span>
+                                  <span>{ingredient}</span>
+                                </li>
                               ))}
                             </ul>
                           </div>
                           
+                          {/* Instructions */}
                           <div>
-                            <p className="text-sm font-medium">Instructions:</p>
-                            <ol className="text-sm text-muted-foreground list-decimal list-inside">
+                            <h5 className="text-sm sm:text-base font-medium mb-2 flex items-center gap-2">
+                              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              Instructions
+                            </h5>
+                            <ol className="text-xs sm:text-sm text-muted-foreground space-y-2">
                               {meal.instructions.map((instruction, i) => (
-                                <li key={i}>{instruction}</li>
+                                <li key={i} className="flex items-start">
+                                  <span className="font-medium mr-2">{i + 1}.</span>
+                                  <span>{instruction}</span>
+                                </li>
                               ))}
                             </ol>
                           </div>
-                        </div>
-                      </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </TabsContent>
+                )
+              })}
+            </Tabs>
           </div>
         )}
 

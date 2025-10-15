@@ -183,6 +183,68 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             },
           }
           setUser(userProfile)
+
+          // Load active meal plan and workout plan
+          if (!isCancelled) {
+            // Load most recent completed meal plan
+            const { data: mealPlanData } = await supabase
+              .from('meal_plans')
+              .select('id, title, calories, status, plan, plan_data, macros')
+              .eq('user_id', profileData.id)
+              .eq('status', 'completed')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
+
+            if (mealPlanData && !isCancelled) {
+              // Extract days from either plan_data.days or plan column
+              let days: unknown[] = []
+              if (mealPlanData.plan_data && typeof mealPlanData.plan_data === 'object' && 'days' in mealPlanData.plan_data) {
+                const planData = mealPlanData.plan_data as { days: unknown }
+                days = Array.isArray(planData.days) ? planData.days : []
+              } else if (mealPlanData.plan) {
+                days = Array.isArray(mealPlanData.plan) ? mealPlanData.plan : []
+              }
+
+              setMealPlan({
+                id: mealPlanData.id,
+                title: mealPlanData.title,
+                dailyCalories: mealPlanData.calories,
+                status: mealPlanData.status,
+                days: days,
+                macros: mealPlanData.macros || { protein: 0, carbs: 0, fats: 0, calories: 0 }
+              } as unknown as MealPlan)
+            }
+
+            // Load most recent completed workout plan
+            const { data: workoutPlanData } = await supabase
+              .from('workout_plans')
+              .select('id, title, days_per_week, status, schedule, plan_data')
+              .eq('user_id', profileData.id)
+              .eq('status', 'completed')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
+
+            if (workoutPlanData && !isCancelled) {
+              // Extract schedule from either plan_data.schedule or schedule column
+              let schedule: unknown[] = []
+              if (workoutPlanData.plan_data && typeof workoutPlanData.plan_data === 'object' && 'schedule' in workoutPlanData.plan_data) {
+                const planData = workoutPlanData.plan_data as { schedule: unknown }
+                schedule = Array.isArray(planData.schedule) ? planData.schedule : []
+              } else if (workoutPlanData.schedule) {
+                schedule = Array.isArray(workoutPlanData.schedule) ? workoutPlanData.schedule : []
+              }
+
+              setWorkoutPlan({
+                id: workoutPlanData.id,
+                title: workoutPlanData.title,
+                daysPerWeek: workoutPlanData.days_per_week,
+                status: workoutPlanData.status,
+                schedule: schedule
+              } as unknown as WorkoutPlan)
+            }
+          }
         }
         
         if (!isCancelled) {

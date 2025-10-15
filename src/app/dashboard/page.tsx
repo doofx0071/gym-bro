@@ -155,6 +155,143 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+      {/* Today's Highlights - Only show if plans exist */}
+      {(mealPlan || workoutPlan) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Today's Meals */}
+          {mealPlan && mealPlan.days && mealPlan.days.length > 0 && (() => {
+            const getCurrentDayIndex = () => {
+              const today = new Date()
+              const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+              return dayOfWeek === 0 ? 6 : dayOfWeek - 1
+            }
+            const todayIndex = getCurrentDayIndex()
+            const todayMeals = mealPlan.days.find((day: { dayIndex?: number; dayOfWeek?: number }) => (day.dayIndex ?? day.dayOfWeek) === todayIndex)
+            
+            if (!todayMeals) return null
+            
+            return (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Utensils className="h-5 w-5 text-primary" />
+                      Today&apos;s Meals
+                    </CardTitle>
+                    <Badge variant="default">Today</Badge>
+                  </div>
+                  <CardDescription>
+                    {(todayMeals as { dayLabel?: string; totalCalories?: number }).dayLabel || 'Today'} • {(todayMeals as { totalCalories?: number }).totalCalories || 0} cal
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {((todayMeals as { meals?: unknown[] }).meals || []).slice(0, 3).map((mealItem: unknown, index: number) => {
+                      const meal = mealItem as {
+                        name: string;
+                        timeOfDay?: string;
+                        type?: string;
+                        calories?: number;
+                        prepTime?: number;
+                        nutrition?: { calories: number };
+                      }
+                      return (
+                      <div key={index} className="flex items-start justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{meal.name}</p>
+                          <p className="text-xs text-muted-foreground">{meal.timeOfDay || meal.type || 'Meal'}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold">{meal.calories || meal.nutrition?.calories || 0} cal</p>
+                          <p className="text-xs text-muted-foreground">{meal.prepTime || 0}min</p>
+                        </div>
+                      </div>
+                      )
+                    })}
+                  </div>
+                  <Separator />
+                  <Button className="w-full cursor-pointer" variant="outline" asChild>
+                    <Link href={`/meal-plans/${mealPlan.id}`}>View Full Plan</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          })()}
+          
+          {/* Today's Workout */}
+          {workoutPlan && ((workoutPlan as { schedule?: unknown[]; days?: unknown[] }).schedule || (workoutPlan as { days?: unknown[] }).days) && ((workoutPlan as { schedule?: unknown[] }).schedule || (workoutPlan as { days?: unknown[] }).days || []).length > 0 && (() => {
+            const getCurrentDayIndex = () => {
+              const today = new Date()
+              const dayOfWeek = today.getDay()
+              return dayOfWeek === 0 ? 6 : dayOfWeek - 1
+            }
+            const todayIndex = getCurrentDayIndex()
+            const workoutDays = (workoutPlan as { schedule?: unknown[]; days?: unknown[] }).schedule || (workoutPlan as { days?: unknown[] }).days || []
+            const todayWorkout = workoutDays.find((day: unknown) => {
+              const dayItem = day as { dayIndex?: number; dayOfWeek?: number }
+              return (dayItem.dayIndex ?? dayItem.dayOfWeek) === todayIndex
+            })
+            
+            if (!todayWorkout) return null
+            
+            return (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Dumbbell className="h-5 w-5 text-primary" />
+                      Today&apos;s Workout
+                    </CardTitle>
+                    <Badge variant="default">Today</Badge>
+                  </div>
+                  <CardDescription>
+                    {(todayWorkout as { dayLabel?: string; name?: string }).dayLabel || (todayWorkout as { name?: string }).name || 'Today&apos;s Workout'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {(todayWorkout as { isRestDay?: boolean; restDay?: boolean }).isRestDay || (todayWorkout as { restDay?: boolean }).restDay ? (
+                    <div className="text-center py-8">
+                      <Dumbbell className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                      <p className="font-medium">Rest Day</p>
+                      <p className="text-sm text-muted-foreground">Recovery & regeneration</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {((todayWorkout as { blocks?: unknown[] }).blocks || []).slice(0, 2).map((blockItem: unknown, blockIndex: number) => {
+                          const block = blockItem as {
+                            type: string;
+                            name: string;
+                            exercises?: unknown[];
+                          }
+                          return (
+                          <div key={blockIndex} className="p-3 bg-muted/50 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant={block.type === 'main' ? 'default' : 'secondary'} className="text-xs">
+                                {block.type}
+                              </Badge>
+                              <p className="text-sm font-medium">{block.name}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {block.exercises?.length || 0} exercises
+                            </p>
+                          </div>
+                          )
+                        })}
+                      </div>
+                      <Separator />
+                      <Button className="w-full cursor-pointer" variant="outline" asChild>
+                        <Link href={`/workout-plans/${workoutPlan.id}`}>View Workout</Link>
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })()}
+        </div>
+      )}
+
       {/* Plans Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Meal Plan Card */}

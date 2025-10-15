@@ -17,8 +17,20 @@ import { createClient } from "@/lib/supabase/client"
 import { PlanSkeleton } from "@/components/plans/PlanSkeleton"
 import { EmptyState } from "@/components/plans/EmptyState"
 import { ListPageHeader } from "@/components/plans/ListPageHeader"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import type { WorkoutPlanSummary } from "@/types/plans"
 import Link from "next/link"
+import { toast } from "sonner"
 
 export default function WorkoutPlansPage() {
   const router = useRouter()
@@ -26,6 +38,7 @@ export default function WorkoutPlansPage() {
   const [plans, setPlans] = useState<WorkoutPlanSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadPlans() {
@@ -69,12 +82,12 @@ export default function WorkoutPlansPage() {
     }
   }, [user, userLoading])
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated - only after loading is complete
   useEffect(() => {
-    if (!userLoading && !authUser) {
+    if (!userLoading && !isLoading && !authUser) {
       router.push('/auth/login')
     }
-  }, [authUser, userLoading, router])
+  }, [authUser, userLoading, isLoading, router])
 
   if (userLoading || isLoading) {
     return (
@@ -107,6 +120,48 @@ export default function WorkoutPlansPage() {
       day: 'numeric',
       year: 'numeric'
     }).format(date)
+  }
+
+  const handleRegenerate = async (planId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const response = await fetch(`/api/workout-plans/${planId}/regenerate`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate workout plan')
+      }
+
+      toast.success('Regenerating workout plan...')
+      router.push(`/workout-plans/${planId}?generating=true`)
+    } catch (err) {
+      console.error('Failed to regenerate workout plan:', err)
+      toast.error('Failed to regenerate workout plan')
+    }
+  }
+
+  const handleDelete = async (planId: string) => {
+    setDeletingPlanId(planId)
+    try {
+      const response = await fetch(`/api/workout-plans/${planId}/delete`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete workout plan')
+      }
+
+      toast.success('Workout plan deleted successfully')
+      
+      // Remove from list
+      setPlans(plans.filter(p => p.id !== planId))
+    } catch (err) {
+      console.error('Failed to delete workout plan:', err)
+      toast.error('Failed to delete workout plan')
+    } finally {
+      setDeletingPlanId(null)
+    }
   }
 
   return (
@@ -192,16 +247,47 @@ export default function WorkoutPlansPage() {
                             </Link>
                           </DropdownMenuItem>
                         )}
-                        {plan.status === 'failed' && (
-                          <DropdownMenuItem className="cursor-pointer">
+                        {(plan.status === 'failed' || plan.status === 'completed') && (
+                          <DropdownMenuItem 
+                            className="cursor-pointer"
+                            onClick={(e) => handleRegenerate(plan.id, e)}
+                          >
                             <RefreshCw className="h-4 w-4 mr-2" />
-                            Retry Generation
+                            {plan.status === 'failed' ? 'Retry Generation' : 'Regenerate'}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Plan
-                        </DropdownMenuItem>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem 
+                              className="cursor-pointer text-destructive focus:text-destructive"
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Plan
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Workout Plan?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete &quot;{plan.title}&quot;. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                className="cursor-pointer bg-destructive hover:bg-destructive/90" 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDelete(plan.id)
+                                }}
+                                disabled={deletingPlanId === plan.id}
+                              >
+                                Delete Plan
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
