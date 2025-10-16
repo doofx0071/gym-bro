@@ -329,3 +329,11 @@
   stroke-width: 1px;
   animation: logo-draw 8s linear infinite;
 }
+
+/* Steam Loader Styles - Smooth animation for gym logo */
+.steam-loader .loader-svg { overflow: visible; }
+.steam-loader .fill-path { fill: currentColor; opacity: 0.2; animation: steam-fill 4s ease-in-out infinite; }
+.steam-loader .dash path { stroke: currentColor; stroke-width: 1px; stroke-linecap: round; fill: none; animation: steam-dashArray var(--sped, 2s) ease-in-out infinite, steam-dashOffset var(--sped, 2s) linear infinite; }
+@keyframes steam-dashArray { 0% { stroke-dasharray: 0 1 359 0; } 50% { stroke-dasharray: 0 359 1 0; } 100% { stroke-dasharray: 359 1 0 0; } }
+@keyframes steam-dashOffset { 0% { stroke-dashoffset: -5; } 100% { stroke-dashoffset: -365; } }
+@keyframes steam-fill { 30%, 55% { opacity: 0; } }

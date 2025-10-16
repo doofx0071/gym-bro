@@ -8,7 +8,7 @@ import type { WorkoutPlanData } from "@/types/plans"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { LogoLoader } from "@/components/logo-loader"
+import { SteamLoader } from "@/components/steam-loader"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog,
@@ -345,7 +345,7 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-8">
-              <LogoLoader 
+              <SteamLoader 
                 size={120}
                 text="Please wait while we create your personalized workout plan..."
               />
