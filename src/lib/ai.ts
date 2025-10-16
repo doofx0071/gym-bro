@@ -536,7 +536,7 @@ IMPORTANT:
 7. Ensure daily macro totals match the targets (±5% tolerance)
 8. Use USDA-compatible ingredient naming for accurate nutrition tracking`
 
-    // Use Mistral for reliable JSON generation
+    // Use Mistral for reliable JSON generation with Groq fallback
     const aiResponse = await callAI(
       [
         { role: 'system', content: systemPrompt },
@@ -547,7 +547,7 @@ IMPORTANT:
         temperature: 0.7,
         max_tokens: 16000, // Increased to 16k for comprehensive 7-day meal plans with full details
         response_format: { type: 'json_object' },
-        fallback: false
+        fallback: true // Enable fallback to Groq if Mistral is down
       }
     )
 
@@ -779,7 +779,7 @@ IMPORTANT INSTRUCTIONS:
 
 Return only the JSON response.`
 
-    // Use Mistral for reliable workout plan generation
+    // Use Mistral for reliable workout plan generation with Groq fallback
     const aiResponse = await callAI(
       [
         { role: 'system', content: systemPrompt },
@@ -790,7 +790,7 @@ Return only the JSON response.`
         temperature: 0.7,
         max_tokens: 6000,
         response_format: { type: 'json_object' },
-        fallback: false
+        fallback: true // Enable fallback to Groq if Mistral is down
       }
     )
 
