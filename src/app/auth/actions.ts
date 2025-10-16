@@ -5,9 +5,26 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 
+function getBaseUrl() {
+  // Use NEXT_PUBLIC_SITE_URL if available (for production)
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
+  }
+  
+  // Use VERCEL_URL for Vercel deployments
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+  
+  // Fallback to localhost for development
+  return 'http://localhost:3000'
+}
+
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
+  const baseUrl = getBaseUrl()
+  
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
@@ -16,7 +33,7 @@ export async function signup(formData: FormData) {
         first_name: formData.get('firstName') as string,
         last_name: formData.get('lastName') as string,
       },
-      emailRedirectTo: `${(await headers()).get('origin')}/auth/callback`,
+      emailRedirectTo: `${baseUrl}/auth/callback`,
     },
   }
 
@@ -125,8 +142,10 @@ export async function signOut() {
 export async function resetPassword(email: string) {
   const supabase = await createClient()
 
+  const baseUrl = getBaseUrl()
+  
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${(await headers()).get('origin')}/auth/reset-password`,
+    redirectTo: `${baseUrl}/auth/reset-password`,
   })
 
   if (error) {
