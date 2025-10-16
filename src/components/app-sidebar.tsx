@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Home, Dumbbell, Utensils, User, Settings, LogOut, ChevronsUpDown } from "lucide-react"
+import { Home, Dumbbell, Utensils, User, Settings, LogOut, ChevronsUpDown, Library } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
@@ -52,6 +52,11 @@ const menuItems = [
     title: "Meals",
     url: "/meal-plans",
     icon: Utensils,
+  },
+  {
+    title: "Exercises",
+    url: "/exercises",
+    icon: Library,
   },
 ]
 

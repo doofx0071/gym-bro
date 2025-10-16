@@ -28,44 +28,47 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-const DIETARY_PREFERENCES = [
-  'vegetarian',
-  'vegan',
-  'pescatarian',
-  'keto',
-  'paleo',
-  'mediterranean',
-  'low-carb',
-  'high-protein',
-  'gluten-free',
-  'dairy-free'
+const FOOD_RESTRICTIONS = [
+  { value: 'vegetarian', label: 'No Meat (Vegetarian)', info: 'No pork, beef, chicken. Eggs and dairy OK. Fish depends on preference.' },
+  { value: 'vegan', label: 'Plant-Based Only (Vegan)', info: 'No meat, fish, eggs, dairy. Only vegetables, fruits, grains, legumes.' },
+  { value: 'pescatarian', label: 'Fish OK, No Meat', info: 'No pork, beef, chicken. Fish and seafood are allowed.' },
+  { value: 'no-pork', label: 'No Pork', info: 'Excludes pork and pork products. Other meats OK.' },
+  { value: 'no-red-meat', label: 'No Red Meat', info: 'No pork or beef. Chicken and fish are OK.' },
+  { value: 'keto', label: 'Minimize Rice & Carbs (Keto)', info: 'Very low carb diet. Rice replaced with cauliflower rice or skipped. Focus on meat, eggs, veggies.' },
+  { value: 'low-carb', label: 'Reduce Rice Portions', info: 'Less rice than normal. Smaller carb portions, more protein and vegetables.' },
+  { value: 'high-protein', label: 'Extra Protein', info: 'More eggs, fish, chicken, and meat. Good for muscle building.' },
+  { value: 'gluten-free', label: 'No Gluten', info: 'No wheat, bread, regular soy sauce. Use gluten-free alternatives.' },
+  { value: 'dairy-free', label: 'No Dairy', info: 'No milk, cheese, butter. Use coconut milk or other alternatives.' }
 ]
 
 const CUISINE_PREFERENCES = [
-  'filipino',
-  'asian-fusion',
-  'traditional-filipino',
-  'modern-filipino',
-  'healthy-filipino',
-  'street-food-inspired',
-  'home-style-filipino',
-  'regional-filipino'
+  { value: 'traditional-filipino', label: 'Traditional Filipino', info: 'Classic dishes: Adobo, Sinigang, Kare-Kare, Menudo, Caldereta' },
+  { value: 'home-style-filipino', label: 'Home-Style Filipino', info: 'Everyday comfort food: Tinola, Ginisang Monggo, Tortang Talong, Nilaga' },
+  { value: 'modern-filipino', label: 'Modern Filipino', info: 'Updated recipes, healthier versions, fusion dishes' },
+  { value: 'street-food-inspired', label: 'Street Food Inspired', info: 'Isaw, Fishballs, Kwek-Kwek, Balut, Taho, Turon, BBQ' },
+  { value: 'regional-filipino', label: 'Regional Specialties', info: 'Bicol Express, Sisig, Lechon, Pinakbet, Laing, Ilocano dishes' },
+  { value: 'healthy-filipino', label: 'Healthy Filipino', info: 'Lighter versions with less oil, more vegetables, grilled instead of fried' }
 ]
 
 const COMMON_ALLERGIES = [
-  'nuts',
-  'peanuts',
-  'dairy',
-  'eggs',
-  'fish',
-  'shellfish',
-  'soy',
-  'gluten',
-  'sesame',
-  'mustard'
+  { value: 'nuts', label: 'Nuts', info: 'Tree nuts: cashews, almonds, walnuts (peanuts listed separately)' },
+  { value: 'peanuts', label: 'Peanuts', info: 'Peanuts and peanut butter. We\'ll skip Kare-Kare and satay.' },
+  { value: 'shellfish', label: 'Shellfish', info: 'Shrimp, crabs, mussels, oysters, tahong, alimango' },
+  { value: 'fish', label: 'All Fish/Seafood', info: 'All fish and seafood products' },
+  { value: 'eggs', label: 'Eggs', info: 'Chicken eggs and egg-based dishes' },
+  { value: 'dairy', label: 'Dairy Products', info: 'Milk, cheese, butter, cream' },
+  { value: 'soy', label: 'Soy', info: 'Soybeans, tofu, some soy sauces' },
+  { value: 'gluten', label: 'Gluten (Wheat)', info: 'Wheat, bread, regular soy sauce, pasta' },
+  { value: 'sesame', label: 'Sesame', info: 'Sesame seeds and sesame oil' }
 ]
 
 export function GenerateMealPlanForm() {
@@ -76,11 +79,17 @@ export function GenerateMealPlanForm() {
     resolver: zodResolver(GenerateMealPlanInputSchema),
     defaultValues: {
       targetCalories: 2000,
+      macroGoals: {
+        protein: 150,
+        carbs: 200,
+        fats: 65
+      },
       mealsPerDay: 3,
       dietaryPreferences: [],
       allergies: [],
-      cuisinePreferences: ['filipino'],
+      cuisinePreferences: ['traditional-filipino'],
       cookingTime: 'moderate',
+      cookingSkill: 'intermediate',
       budget: 'moderate',
       mealPrepFriendly: false,
     },
@@ -90,11 +99,17 @@ export function GenerateMealPlanForm() {
   useEffect(() => {
     form.reset({
       targetCalories: 2000,
+      macroGoals: {
+        protein: 150,
+        carbs: 200,
+        fats: 65
+      },
       mealsPerDay: 3,
       dietaryPreferences: [],
       allergies: [],
-      cuisinePreferences: ['filipino'],
+      cuisinePreferences: ['traditional-filipino'],
       cookingTime: 'moderate',
+      cookingSkill: 'intermediate',
       budget: 'moderate',
       mealPrepFriendly: false,
     })
@@ -130,8 +145,7 @@ export function GenerateMealPlanForm() {
   }
 
   return (
-    <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-20 md:pb-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-24 md:pb-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Generate Meal Plan</h1>
         <p className="text-muted-foreground">
@@ -141,7 +155,9 @@ export function GenerateMealPlanForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card>
+          {/* Masonry grid layout */}
+          <div className="columns-1 lg:columns-2 gap-6 space-y-6 lg:space-y-0">
+          <Card className="break-inside-avoid mb-6">
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
               <CardDescription>
@@ -256,56 +272,32 @@ export function GenerateMealPlanForm() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="break-inside-avoid mb-6">
             <CardHeader>
-              <CardTitle>Dietary Preferences</CardTitle>
+              <CardTitle>Nutrition Goals</CardTitle>
               <CardDescription>
-                Select your dietary style and preferences
+                Set your macro targets (optional - will be calculated from calories if not set)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="dietaryPreferences"
-                render={() => (
+                name="macroGoals.protein"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Dietary Style</FormLabel>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                      {DIETARY_PREFERENCES.map((preference) => (
-                        <FormField
-                          key={preference}
-                          control={form.control}
-                          name="dietaryPreferences"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={preference}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(preference)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...(field.value || []), preference])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== preference
-                                            )
-                                          )
-                                    }}
-                                    className="cursor-pointer"
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal capitalize cursor-pointer">
-                                  {preference.replace('-', ' ')}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
+                    <FormLabel>Protein Target (grams/day)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="150"
+                        {...field}
+                        value={field.value || ''}
+                        onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Recommended: 0.7-1g per lb of body weight for muscle building
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -313,46 +305,22 @@ export function GenerateMealPlanForm() {
 
               <FormField
                 control={form.control}
-                name="allergies"
-                render={() => (
+                name="macroGoals.carbs"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Food Allergies</FormLabel>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                      {COMMON_ALLERGIES.map((allergy) => (
-                        <FormField
-                          key={allergy}
-                          control={form.control}
-                          name="allergies"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={allergy}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(allergy)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...(field.value || []), allergy])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== allergy
-                                            )
-                                          )
-                                    }}
-                                    className="cursor-pointer"
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal capitalize cursor-pointer">
-                                  {allergy}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
+                    <FormLabel>Carbohydrates Target (grams/day)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="200"
+                        {...field}
+                        value={field.value || ''}
+                        onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Primary energy source - adjust based on activity level
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -360,46 +328,22 @@ export function GenerateMealPlanForm() {
 
               <FormField
                 control={form.control}
-                name="cuisinePreferences"
-                render={() => (
+                name="macroGoals.fats"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cuisine Preferences</FormLabel>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                      {CUISINE_PREFERENCES.map((cuisine) => (
-                        <FormField
-                          key={cuisine}
-                          control={form.control}
-                          name="cuisinePreferences"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={cuisine}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(cuisine)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...(field.value || []), cuisine])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== cuisine
-                                            )
-                                          )
-                                    }}
-                                    className="cursor-pointer"
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal capitalize cursor-pointer">
-                                  {cuisine.replace('-', ' ')}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
+                    <FormLabel>Fats Target (grams/day)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="65"
+                        {...field}
+                        value={field.value || ''}
+                        onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Essential for hormone production - aim for 20-30% of calories
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -407,7 +351,205 @@ export function GenerateMealPlanForm() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="break-inside-avoid mb-6">
+            <CardHeader>
+              <CardTitle>Food Preferences & Restrictions</CardTitle>
+              <CardDescription>
+                Customize your meals based on your dietary needs and preferences (All optional)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="multiple" className="w-full">
+                {/* Dietary Restrictions & Goals */}
+                <AccordionItem value="dietary-restrictions">
+                  <AccordionTrigger className="text-base font-semibold hover:no-underline hover:bg-accent/50 cursor-pointer transition-colors rounded-md px-2 -mx-2">
+                    Dietary Restrictions & Goals
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <FormField
+                      control={form.control}
+                      name="dietaryPreferences"
+                      render={() => (
+                        <FormItem>
+                          <FormDescription className="mb-3">
+                            Select any dietary restrictions or nutritional goals you want to follow
+                          </FormDescription>
+                          <div className="grid grid-cols-1 gap-3">
+                            {FOOD_RESTRICTIONS.map((restriction) => (
+                              <FormField
+                                key={restriction.value}
+                                control={form.control}
+                                name="dietaryPreferences"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem
+                                      key={restriction.value}
+                                      className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-3 bg-card hover:bg-accent/50 transition-colors"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(restriction.value)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...(field.value || []), restriction.value])
+                                              : field.onChange(
+                                                  field.value?.filter(
+                                                    (value) => value !== restriction.value
+                                                  )
+                                                )
+                                          }}
+                                          className="cursor-pointer mt-0.5"
+                                        />
+                                      </FormControl>
+                                      <div className="flex-1 space-y-1 cursor-pointer">
+                                        <FormLabel className="text-sm font-medium cursor-pointer leading-none">
+                                          {restriction.label}
+                                        </FormLabel>
+                                        <p className="text-xs text-muted-foreground leading-snug">
+                                          {restriction.info}
+                                        </p>
+                                      </div>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Food Allergies */}
+                <AccordionItem value="allergies">
+                  <AccordionTrigger className="text-base font-semibold hover:no-underline hover:bg-accent/50 cursor-pointer transition-colors rounded-md px-2 -mx-2">
+                    ⚠️ Food Allergies & Health Safety
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <FormField
+                      control={form.control}
+                      name="allergies"
+                      render={() => (
+                        <FormItem>
+                          <FormDescription className="mb-3">
+                            Select any foods you&apos;re allergic to - we&apos;ll avoid them completely
+                          </FormDescription>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {COMMON_ALLERGIES.map((allergy) => (
+                              <FormField
+                                key={allergy.value}
+                                control={form.control}
+                                name="allergies"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem
+                                      key={allergy.value}
+                                      className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-3 bg-card hover:bg-accent/50 transition-colors"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(allergy.value)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...(field.value || []), allergy.value])
+                                              : field.onChange(
+                                                  field.value?.filter(
+                                                    (value) => value !== allergy.value
+                                                  )
+                                                )
+                                          }}
+                                          className="cursor-pointer mt-0.5"
+                                        />
+                                      </FormControl>
+                                      <div className="flex-1 space-y-1 cursor-pointer">
+                                        <FormLabel className="text-sm font-medium cursor-pointer leading-none">
+                                          {allergy.label}
+                                        </FormLabel>
+                                        <p className="text-xs text-muted-foreground leading-snug">
+                                          {allergy.info}
+                                        </p>
+                                      </div>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Filipino Food Style */}
+                <AccordionItem value="cuisine-preferences">
+                  <AccordionTrigger className="text-base font-semibold hover:no-underline hover:bg-accent/50 cursor-pointer transition-colors rounded-md px-2 -mx-2">
+                    🇵🇭 Filipino Food Style
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <FormField
+                      control={form.control}
+                      name="cuisinePreferences"
+                      render={() => (
+                        <FormItem>
+                          <FormDescription className="mb-3">
+                            What type of Filipino dishes do you want? (Select all you like)
+                          </FormDescription>
+                          <div className="grid grid-cols-1 gap-3">
+                            {CUISINE_PREFERENCES.map((cuisine) => (
+                              <FormField
+                                key={cuisine.value}
+                                control={form.control}
+                                name="cuisinePreferences"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem
+                                      key={cuisine.value}
+                                      className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-3 bg-card hover:bg-accent/50 transition-colors"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(cuisine.value)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...(field.value || []), cuisine.value])
+                                              : field.onChange(
+                                                  field.value?.filter(
+                                                    (value) => value !== cuisine.value
+                                                  )
+                                                )
+                                          }}
+                                          className="cursor-pointer mt-0.5"
+                                        />
+                                      </FormControl>
+                                      <div className="flex-1 space-y-1 cursor-pointer">
+                                        <FormLabel className="text-sm font-medium cursor-pointer leading-none">
+                                          {cuisine.label}
+                                        </FormLabel>
+                                        <p className="text-xs text-muted-foreground leading-snug">
+                                          {cuisine.info}
+                                        </p>
+                                      </div>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          <Card className="break-inside-avoid mb-6">
             <CardHeader>
               <CardTitle>Cooking Preferences</CardTitle>
               <CardDescription>
@@ -415,6 +557,32 @@ export function GenerateMealPlanForm() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="cookingSkill"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cooking Skill Level</FormLabel>
+                    <FormControl>
+                      <Select value={field.value || 'intermediate'} onValueChange={field.onChange}>
+                        <SelectTrigger className="cursor-pointer">
+                          <SelectValue placeholder="Select your cooking skill level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="beginner">Beginner (Simple recipes)</SelectItem>
+                          <SelectItem value="intermediate">Intermediate (Moderate complexity)</SelectItem>
+                          <SelectItem value="advanced">Advanced (Complex techniques)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormDescription>
+                      We&apos;ll match recipe complexity to your skill level
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="cookingTime"
@@ -487,29 +655,33 @@ export function GenerateMealPlanForm() {
             </CardContent>
           </Card>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              className="flex-1 order-2 sm:order-1 cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isGenerating} className="flex-1 order-1 sm:order-2 cursor-pointer">
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                'Generate Meal Plan'
-              )}
-            </Button>
+          {/* Buttons inside masonry grid */}
+          <div className="break-inside-avoid mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                className="w-full sm:w-auto order-2 sm:order-1 cursor-pointer min-w-[120px]"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isGenerating} className="w-full sm:w-auto order-1 sm:order-2 cursor-pointer min-w-[200px]">
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Meal Plan'
+                )}
+              </Button>
+            </div>
           </div>
+          </div>
+          {/* End masonry grid */}
         </form>
       </Form>
-      </div>
     </div>
   )
 }

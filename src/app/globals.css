@@ -231,7 +231,8 @@
   to {
     background-position: var(--bg-size, 300%) 0;
     }
-  }}
+  }
+}
 
 @layer base {
   * {
@@ -286,4 +287,45 @@
 ::view-transition-old(root), ::view-transition-new(root) {
     animation: none;
     mix-blend-mode: normal;
+}
+
+/* Logo Loader Animation - 3 seconds draw, 2 seconds pause, 3 seconds erase */
+@keyframes logo-draw {
+  0% {
+    stroke-dasharray: 500px;
+    stroke-dashoffset: 500px; /* Start hidden */
+  }
+  37.5% {
+    stroke-dasharray: 500px;
+    stroke-dashoffset: 0px; /* Draw complete - 3 seconds */
+  }
+  62.5% {
+    stroke-dasharray: 500px;
+    stroke-dashoffset: 0px; /* Pause - 2 seconds */
+  }
+  99.99% {
+    stroke-dasharray: 500px;
+    stroke-dashoffset: -500px; /* Erase complete - 3 seconds */
+  }
+  100% {
+    stroke-dasharray: 500px;
+    stroke-dashoffset: 500px; /* Reset instantly */
+  }
+}
+
+/* Logo Loader Styles */
+.logo-loader svg {
+  overflow: visible;
+}
+
+.logo-loader svg path,
+.logo-loader svg circle,
+.logo-loader svg rect,
+.logo-loader svg polygon,
+.logo-loader svg polyline,
+.logo-loader svg line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1px;
+  animation: logo-draw 8s linear infinite;
 }

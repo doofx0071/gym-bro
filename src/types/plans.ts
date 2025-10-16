@@ -60,6 +60,7 @@ export interface MealPlanData {
 export type BlockType = 'warmup' | 'main' | 'accessory' | 'cooldown'
 
 export interface ExerciseDetail {
+  exerciseId?: string | null // ExerciseDB ID for fetching GIFs and details (null if custom exercise)
   name: string
   sets: number
   reps: string // e.g., "8-12", "AMRAP", "30 seconds"
@@ -92,7 +93,7 @@ export interface WorkoutPlanData {
   user_id: string
   title: string
   focus?: string // e.g., "Strength", "Hypertrophy", "Endurance"
-  split?: 'full-body' | 'upper-lower' | 'push-pull-legs' | 'custom'
+  split?: 'full-body' | 'upper-lower' | 'push-pull-legs' | 'bro-split' | 'custom'
   daysPerWeek: number
   schedule: WorkoutDay[]
   preferences: Record<string, unknown>
@@ -108,17 +109,31 @@ export interface WorkoutPlanData {
 }
 
 // Request Input Types
+export interface MacroGoals {
+  protein?: number // grams
+  carbs?: number // grams
+  fats?: number // grams
+}
+
 export interface GenerateMealPlanInput {
   title?: string
   goal?: string
   targetCalories?: number
+  macroGoals?: MacroGoals
   dietaryPreferences?: string[]
   allergies?: string[]
   mealsPerDay?: number
   cuisinePreferences?: string[]
   cookingTime?: 'quick' | 'moderate' | 'elaborate'
+  cookingSkill?: 'beginner' | 'intermediate' | 'advanced'
   budget?: 'low' | 'moderate' | 'high'
   mealPrepFriendly?: boolean
+}
+
+export interface CustomSplitDay {
+  dayNumber: number
+  label: string
+  muscleGroups: string[]
 }
 
 export interface GenerateWorkoutPlanInput {
@@ -126,10 +141,11 @@ export interface GenerateWorkoutPlanInput {
   daysPerWeek?: number
   sessionLength?: number // minutes
   focus?: 'strength' | 'hypertrophy' | 'endurance' | 'general'
-  split?: 'full-body' | 'upper-lower' | 'push-pull-legs' | 'custom'
+  split?: 'full-body' | 'upper-lower' | 'push-pull-legs' | 'bro-split' | 'custom'
   equipment?: string[] // e.g., ['dumbbells', 'barbell', 'bodyweight']
   injuries?: string[]
   experience?: 'beginner' | 'intermediate' | 'advanced'
+  customSplitConfig?: CustomSplitDay[] // For custom split type
 }
 
 // Response Payload Types (for AI generation)

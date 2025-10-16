@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Home, Dumbbell, Utensils, User } from "lucide-react"
+import { Home, Dumbbell, Utensils, Library, User } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -21,6 +21,11 @@ const navItems = [
     title: "Meals",
     url: "/meal-plans",
     icon: Utensils,
+  },
+  {
+    title: "Exercises",
+    url: "/exercises",
+    icon: Library,
   },
   {
     title: "Profile",

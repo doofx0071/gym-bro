@@ -8,7 +8,7 @@ import type { MealPlanData } from "@/types/plans"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
+import { LogoLoader } from "@/components/logo-loader"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog,
@@ -38,7 +38,6 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [authInitialized, setAuthInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [progress, setProgress] = useState(0)
   const [isRegenerating, setIsRegenerating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const isGenerating = searchParams.get('generating') === 'true'
@@ -142,8 +141,6 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
         const data = await response.json()
         
         if (response.ok) {
-          setProgress(data.progress)
-          
           if (data.status === 'completed') {
             // Plan is ready, reload the full plan data
             loadPlan()
@@ -211,14 +208,14 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6">
             <h2 className="text-destructive font-medium text-lg mb-2">Error Loading Meal Plan</h2>
             <p className="text-destructive/80 mb-4">{error}</p>
-            <div className="flex gap-3">
-              <Button variant="outline" asChild>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button variant="outline" className="cursor-pointer" asChild>
                 <Link href="/meal-plans">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Meal Plans
                 </Link>
               </Button>
-              <Button onClick={() => loadPlan()}>
+              <Button onClick={() => loadPlan()} className="cursor-pointer">
                 Try Again
               </Button>
             </div>
@@ -234,7 +231,7 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
         <div>
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">Meal plan not found</p>
-            <Button variant="outline" asChild>
+            <Button variant="outline" className="cursor-pointer" asChild>
               <Link href="/meal-plans">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Meal Plans
@@ -260,35 +257,35 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
   }
 
   return (
-    <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-20 md:pb-8">
+    <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-24 md:pb-8">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" className="cursor-pointer" asChild>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button variant="outline" size="sm" className="cursor-pointer flex-shrink-0" asChild>
               <Link href="/meal-plans">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold">{plan.title}</h1>
-              <div className="flex items-center gap-2 mt-1">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-2xl font-bold truncate">{plan.title}</h1>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {getStatusBadge(plan.status)}
-                <span className="text-sm text-muted-foreground">•</span>
-                <span className="text-sm text-muted-foreground">{plan.goal}</span>
+                <span className="text-sm text-muted-foreground hidden sm:inline">•</span>
+                <span className="text-xs sm:text-sm text-muted-foreground truncate">{plan.goal}</span>
               </div>
             </div>
           </div>
           
           {/* Action Buttons - Only show for completed plans */}
           {plan.status === 'completed' && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {/* Regenerate Button */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="cursor-pointer" disabled={isRegenerating || isDeleting}>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
-                    Regenerate
+                  <Button variant="outline" size="sm" className="cursor-pointer" disabled={isRegenerating || isDeleting}>
+                    <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 sm:mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">Regenerate</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -310,9 +307,9 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
               {/* Delete Button */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="cursor-pointer" disabled={isDeleting || isRegenerating}>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
+                  <Button variant="destructive" size="sm" className="cursor-pointer" disabled={isDeleting || isRegenerating}>
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Delete</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -346,20 +343,18 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
                 Generating Your Meal Plan
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Progress value={progress} className="w-full" />
-                <p className="text-sm text-muted-foreground">
-                  Please wait while we create your personalized meal plan...
-                </p>
-              </div>
+            <CardContent className="flex flex-col items-center justify-center py-8">
+              <LogoLoader 
+                size={120}
+                text="Please wait while we create your personalized meal plan..."
+              />
             </CardContent>
           </Card>
         )}
 
-        {/* Plan Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+        {/* Plan Overview - Masonry Grid */}
+        <div className="columns-1 md:columns-3 gap-4 space-y-4 md:space-y-0">
+          <Card className="break-inside-avoid mb-4">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <Target className="h-8 w-8 text-primary" />
@@ -371,7 +366,7 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="break-inside-avoid mb-4">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <Utensils className="h-8 w-8 text-primary" />
@@ -383,7 +378,7 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="break-inside-avoid mb-4">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <Utensils className="h-8 w-8 text-primary" />
@@ -565,8 +560,8 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
                 <p className="text-sm text-muted-foreground mb-4">
                   {plan.error || 'Something went wrong while generating your meal plan.'}
                 </p>
-                <Button asChild>
-                  <Link href="/meal-plans/new">Generate New Plan</Link>
+                <Button asChild className="cursor-pointer">
+                  <Link href="/meal-plans/new" className="cursor-pointer">Generate New Plan</Link>
                 </Button>
               </div>
             </CardContent>

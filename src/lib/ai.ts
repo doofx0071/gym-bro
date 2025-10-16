@@ -399,11 +399,21 @@ export async function generateMealPlan(
       mealsPerDay: input.mealsPerDay || profile.mealsPerDay || 3
     }
 
+    // Use user's macro goals if provided, otherwise fall back to profile macros
+    const targetMacros = input.macroGoals && (input.macroGoals.protein || input.macroGoals.carbs || input.macroGoals.fats) 
+      ? {
+          protein: input.macroGoals.protein || profile.macros.protein,
+          carbs: input.macroGoals.carbs || profile.macros.carbs,
+          fats: input.macroGoals.fats || profile.macros.fats
+        }
+      : profile.macros
+
     const preferences = {
       goal: input.goal || (profile.primaryGoal === 'weight-loss' ? 'Weight Loss' : 
                           profile.primaryGoal === 'muscle-gain' ? 'Muscle Gain' : 'General Health'),
       cuisinePreferences: input.cuisinePreferences || ['filipino'],
       cookingTime: input.cookingTime || 'moderate',
+      cookingSkill: input.cookingSkill || 'intermediate',
       budget: input.budget || 'moderate',
       mealPrepFriendly: input.mealPrepFriendly || false
     }
@@ -444,6 +454,36 @@ The JSON must exactly match this structure:
   "groceryList": []
 }`
 
+    // Build cooking skill guidance
+    let cookingGuidance = ''
+    if (preferences.cookingSkill === 'beginner') {
+      cookingGuidance = `
+COOKING SKILL: Beginner
+- Keep recipes SIMPLE with basic techniques only
+- Use common, easy-to-find ingredients
+- Limit steps to 5-8 per recipe
+- Avoid complex techniques like deboning, filleting, or intricate knife work
+- Include plenty of one-pot meals and simple stir-fries
+- Provide clear, beginner-friendly instructions
+`
+    } else if (preferences.cookingSkill === 'intermediate') {
+      cookingGuidance = `
+COOKING SKILL: Intermediate
+- Include moderate complexity recipes
+- Mix of simple and more involved techniques
+- Can include multi-step recipes
+- Assume familiarity with basic cooking methods
+`
+    } else {
+      cookingGuidance = `
+COOKING SKILL: Advanced
+- Can include complex Filipino recipes
+- Advanced techniques welcomed (deboning, proper braising, etc.)
+- Traditional preparation methods
+- Authentic, restaurant-quality dishes
+`
+    }
+
     const userPrompt = `Create a complete 7-day Filipino meal plan for:
 
 User Profile:
@@ -457,7 +497,7 @@ User Profile:
 Plan Requirements:
 - Title: ${input.title || `Filipino ${preferences.goal} Meal Plan`}
 - Daily Calories: ${userInfo.targetCalories}
-- Daily Macros: ${userInfo.targetMacros.protein}g protein, ${userInfo.targetMacros.carbs}g carbs, ${userInfo.targetMacros.fats}g fats
+- Daily Macros: ${targetMacros.protein}g protein, ${targetMacros.carbs}g carbs, ${targetMacros.fats}g fats
 - Meals per day: ${userInfo.mealsPerDay} meals EACH day (Total: ${userInfo.mealsPerDay * 7} meals for the week)
 - Cuisine Focus: FILIPINO DISHES AND FOODS ONLY
 - Include traditional Filipino dishes like Adobo, Sinigang, Pancit, Tinola, Sisig, Kare-Kare, Lumpia, etc.
@@ -470,12 +510,22 @@ Plan Requirements:
 - Budget consideration: ${preferences.budget}
 - Meal prep friendly: ${preferences.mealPrepFriendly ? 'Yes - include batch cooking tips' : 'No'}
 
+${cookingGuidance}
+
+MACRO TARGET EMPHASIS:
+- STRICTLY aim for ${targetMacros.protein}g protein daily - prioritize protein-rich Filipino dishes
+- Target ${targetMacros.carbs}g carbs daily - adjust rice portions accordingly
+- Target ${targetMacros.fats}g fats daily - balance coconut-based and lean preparations
+- Distribute macros evenly across meals OR front-load protein for muscle building goals
+
 IMPORTANT: 
 1. Return ONLY the JSON object. No explanations, no additional text, no markdown formatting.
 2. Create 7 COMPLETE and DIFFERENT days, not repeated patterns
 3. Each day must have EXACTLY ${userInfo.mealsPerDay} meals
 4. Focus exclusively on Filipino cuisine and ingredients
-5. Ensure each meal has authentic Filipino flavors and cooking methods`
+5. Ensure each meal has authentic Filipino flavors and cooking methods
+6. RESPECT the cooking skill level - don't make it too complex or too simple
+7. Ensure daily macro totals match the targets (±5% tolerance)`
 
     // Use Mistral for reliable JSON generation
     const aiResponse = await callAI(
@@ -552,6 +602,9 @@ export async function generateWorkoutPlan(
   profile: UserProfile
 ): Promise<{ success: true; data: WorkoutPlanPayload } | { success: false; error: string }> {
   try {
+    // Import ExerciseDB helper (dynamic import to avoid server/client issues)
+    const { getSampleExercisesByCategory, fetchExercisesForWorkout, formatExercisesForAI } = await import('@/lib/ai/exercisedb-helper')
+    
     // Build context from user profile and input
     const userInfo = {
       age: profile.age,
@@ -570,10 +623,23 @@ export async function generateWorkoutPlan(
       split: input.split || 'full-body',
       equipment: input.equipment || ['dumbbells', 'barbell', 'bodyweight'],
       injuries: input.injuries || [],
-      experience: input.experience || profile.fitnessLevel
+      experience: input.experience || profile.fitnessLevel,
+      customSplitConfig: input.customSplitConfig
     }
 
-    // Create comprehensive prompt
+    // Fetch ExerciseDB exercises and prepare prompt section
+    let exerciseDBList = ''
+    try {
+      const exercisesForAI = await fetchExercisesForWorkout({ equipment: workoutPrefs.equipment, limit: 120 })
+      exerciseDBList = exercisesForAI.length > 0 
+        ? formatExercisesForAI(exercisesForAI)
+        : getSampleExercisesByCategory()
+    } catch (e) {
+      console.warn('Falling back to sample ExerciseDB list due to fetch error:', e)
+      exerciseDBList = getSampleExercisesByCategory()
+    }
+
+    // Create comprehensive prompt with ExerciseDB integration
     const systemPrompt = `You are a certified personal trainer creating personalized workout plans. You must respond with valid JSON only.
 
 The JSON must exactly match this structure:
@@ -592,6 +658,7 @@ The JSON must exactly match this structure:
           "name": "string - block description",
           "exercises": [
             {
+              "exerciseId": "string|null - ExerciseDB ID (e.g., \"0001\") or null for custom",
               "name": "string - exercise name",
               "sets": number,
               "reps": "string - e.g. 8-12, AMRAP, 30 seconds",
@@ -607,7 +674,65 @@ The JSON must exactly match this structure:
       "focus": "string - day focus like Upper Body, Legs, etc"
     }
   ]
-}`
+}
+
+IMPORTANT: For exercises, prefer using ExerciseDB IDs when available. Set exerciseId to the ID string (e.g., "0001") or null if creating a custom exercise.`
+
+    // Build split-specific guidance
+    let splitGuidance = ''
+    if (workoutPrefs.split === 'full-body') {
+      splitGuidance = `
+SPLIT TYPE: Full Body
+- Train all major muscle groups in each session
+- Include at least one exercise for: chest, back, legs, shoulders, arms, core
+- Focus on compound movements (squats, deadlifts, bench press, rows, overhead press)
+- Suitable for ${workoutPrefs.daysPerWeek} days per week
+`
+    } else if (workoutPrefs.split === 'upper-lower') {
+      splitGuidance = `
+SPLIT TYPE: Upper/Lower Split
+- Alternate between upper body and lower body days
+- Upper days: Chest, back, shoulders, arms
+- Lower days: Quads, hamstrings, glutes, calves, core
+- Typically 4 days per week (Upper/Lower/Rest/Upper/Lower/Rest/Rest)
+`
+    } else if (workoutPrefs.split === 'push-pull-legs') {
+      splitGuidance = `
+SPLIT TYPE: Push/Pull/Legs (PPL)
+- Push Day: Chest, shoulders, triceps (pressing movements)
+- Pull Day: Back, biceps, forearms (pulling movements)
+- Leg Day: Quads, hamstrings, glutes, calves, core
+- Can be run 3x/week (once through) or 6x/week (twice through)
+- STRICT separation: No pull exercises on push days, no push exercises on pull days
+`
+    } else if (workoutPrefs.split === 'bro-split') {
+      splitGuidance = `
+SPLIT TYPE: Bro Split (Body Part Split)
+- Focus on ONE major muscle group per day with high volume
+- Day 1: Chest (4-6 exercises, 15-20 sets)
+- Day 2: Back (4-6 exercises, 15-20 sets)
+- Day 3: Legs (4-6 exercises, 15-20 sets)
+- Day 4: Shoulders (4-5 exercises, 12-15 sets)
+- Day 5: Arms - Biceps & Triceps (3-4 exercises each, 12-16 sets total)
+- Typically 5-6 days per week with dedicated muscle group focus
+`
+    } else if (workoutPrefs.split === 'custom' && workoutPrefs.customSplitConfig) {
+      splitGuidance = `
+SPLIT TYPE: Custom Split (User Defined)
+The user has defined a custom split. You MUST follow their exact muscle group assignments:
+${workoutPrefs.customSplitConfig.map((day) => 
+  `- ${day.label}: ${day.muscleGroups.join(', ')}`
+).join('\n')}
+
+IMPORTANT: Only include exercises for the specified muscle groups on each day. Do not add extra muscle groups.
+`
+    } else {
+      splitGuidance = `
+SPLIT TYPE: Custom
+- Create a balanced split based on ${workoutPrefs.daysPerWeek} days per week
+- Ensure all major muscle groups are trained at least once per week
+`
+    }
 
     const userPrompt = `Create a ${workoutPrefs.daysPerWeek}-day workout plan for:
 
@@ -622,12 +747,26 @@ Workout Requirements:
 - Days per week: ${workoutPrefs.daysPerWeek}
 - Session length: ~${workoutPrefs.sessionLength} minutes
 - Focus: ${workoutPrefs.focus}
-- Split: ${workoutPrefs.split}
 - Available equipment: ${workoutPrefs.equipment.join(', ')}
 - Injuries/limitations: ${workoutPrefs.injuries.length > 0 ? workoutPrefs.injuries.join(', ') : 'none'}
 - Experience level: ${workoutPrefs.experience}
 
-Create a balanced program with proper progression, warm-up, cool-down, and rest days. Include compound movements and progressive overload principles.
+${splitGuidance}
+
+${exerciseDBList}
+
+IMPORTANT INSTRUCTIONS:
+- You are a certified personal trainer focused on safety and proper form
+- **USE ExerciseDB IDs from the list above when possible** - this provides users with animated GIFs
+- Respect the split type exactly as specified above
+- For bro splits, use high volume for the target muscle group
+- For custom splits, ONLY include the muscle groups specified for each day
+- Avoid exercises that conflict with listed injuries
+- Only use equipment the user has available
+- Include warm-up and cool-down blocks
+- Use progressive overload principles
+- Set exerciseId to the ID string (e.g., "0001") when using ExerciseDB exercises
+- Set exerciseId to null if creating a custom exercise not in the database
 
 Return only the JSON response.`
 

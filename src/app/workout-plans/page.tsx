@@ -165,7 +165,7 @@ export default function WorkoutPlansPage() {
   }
 
   return (
-    <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-20 md:pb-8">
+    <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-24 md:pb-8">
       <div className="space-y-6 md:space-y-8">
         {/* Header */}
         <ListPageHeader

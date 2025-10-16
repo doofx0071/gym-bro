@@ -79,6 +79,7 @@ export const MealPlanDataSchema = z.object({
 export const BlockTypeSchema = z.enum(['warmup', 'main', 'accessory', 'cooldown'])
 
 export const ExerciseDetailSchema = z.object({
+  exerciseId: z.string().nullable().optional(), // ExerciseDB ID (null if custom exercise)
   name: z.string().min(1),
   sets: z.number().min(1),
   reps: z.string().min(1),
@@ -111,7 +112,7 @@ export const WorkoutPlanDataSchema = z.object({
   user_id: z.string().min(1),
   title: z.string().min(1),
   focus: z.string().optional(),
-  split: z.enum(['full-body', 'upper-lower', 'push-pull-legs', 'custom']).optional(),
+  split: z.enum(['full-body', 'upper-lower', 'push-pull-legs', 'bro-split', 'custom']).optional(),
   daysPerWeek: z.number().min(1).max(7),
   schedule: z.array(WorkoutDaySchema),
   preferences: z.record(z.string(), z.unknown()),
@@ -127,28 +128,43 @@ export const WorkoutPlanDataSchema = z.object({
 }) satisfies z.ZodType<WorkoutPlanData>
 
 // Input Schemas for API requests
+const MacroGoalsSchema = z.object({
+  protein: z.number().min(0).max(500).optional(),
+  carbs: z.number().min(0).max(1000).optional(),
+  fats: z.number().min(0).max(300).optional()
+})
+
 export const GenerateMealPlanInputSchema = z.object({
   title: z.string().min(1).optional(),
   goal: z.string().min(1).optional(),
   targetCalories: z.number().min(800).max(5000).optional(),
+  macroGoals: MacroGoalsSchema.optional(),
   dietaryPreferences: z.array(z.string()).optional(),
   allergies: z.array(z.string()).optional(),
   mealsPerDay: z.number().min(2).max(6).optional(),
   cuisinePreferences: z.array(z.string()).optional(),
   cookingTime: z.enum(['quick', 'moderate', 'elaborate']).optional(),
+  cookingSkill: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
   budget: z.enum(['low', 'moderate', 'high']).optional(),
   mealPrepFriendly: z.boolean().optional()
 }) satisfies z.ZodType<GenerateMealPlanInput>
+
+const CustomSplitDaySchema = z.object({
+  dayNumber: z.number().min(1).max(7),
+  label: z.string().min(1),
+  muscleGroups: z.array(z.string()).min(1)
+})
 
 export const GenerateWorkoutPlanInputSchema = z.object({
   title: z.string().min(1).optional(),
   daysPerWeek: z.number().min(1).max(7).optional(),
   sessionLength: z.number().min(15).max(180).optional(), // 15 mins to 3 hours
   focus: z.enum(['strength', 'hypertrophy', 'endurance', 'general']).optional(),
-  split: z.enum(['full-body', 'upper-lower', 'push-pull-legs', 'custom']).optional(),
+  split: z.enum(['full-body', 'upper-lower', 'push-pull-legs', 'bro-split', 'custom']).optional(),
   equipment: z.array(z.string()).optional(),
   injuries: z.array(z.string()).optional(),
-  experience: z.enum(['beginner', 'intermediate', 'advanced']).optional()
+  experience: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+  customSplitConfig: z.array(CustomSplitDaySchema).optional()
 }) satisfies z.ZodType<GenerateWorkoutPlanInput>
 
 // Payload schemas for AI generation responses

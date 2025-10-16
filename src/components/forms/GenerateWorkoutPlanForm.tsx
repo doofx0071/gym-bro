@@ -30,6 +30,7 @@ import { Slider } from '@/components/ui/slider'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { CustomSplitBuilder } from './CustomSplitBuilder'
 
 const EQUIPMENT_OPTIONS = [
   'bodyweight',
@@ -117,8 +118,7 @@ export function GenerateWorkoutPlanForm() {
   }
 
   return (
-    <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-20 md:pb-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="flex-1 w-full bg-gradient-to-b from-background to-muted p-4 md:p-8 pb-24 md:pb-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Generate Workout Plan</h1>
         <p className="text-muted-foreground">
@@ -128,7 +128,9 @@ export function GenerateWorkoutPlanForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card>
+          {/* Masonry grid layout */}
+          <div className="columns-1 lg:columns-2 gap-6 space-y-6 lg:space-y-0">
+          <Card className="break-inside-avoid mb-6">
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
               <CardDescription>
@@ -212,7 +214,7 @@ export function GenerateWorkoutPlanForm() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="break-inside-avoid mb-6">
             <CardHeader>
               <CardTitle>Training Schedule</CardTitle>
               <CardDescription>
@@ -294,9 +296,10 @@ export function GenerateWorkoutPlanForm() {
                           <SelectValue placeholder="Select workout split" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="full-body">Full Body</SelectItem>
-                          <SelectItem value="upper-lower">Upper/Lower Split</SelectItem>
-                          <SelectItem value="push-pull-legs">Push/Pull/Legs</SelectItem>
+                          <SelectItem value="full-body">Full Body (3-5x/week)</SelectItem>
+                          <SelectItem value="upper-lower">Upper/Lower Split (4x/week)</SelectItem>
+                          <SelectItem value="push-pull-legs">Push/Pull/Legs (6x/week)</SelectItem>
+                          <SelectItem value="bro-split">Bro Split (5-6x/week)</SelectItem>
                           <SelectItem value="custom">Custom Split</SelectItem>
                         </SelectContent>
                       </Select>
@@ -308,10 +311,29 @@ export function GenerateWorkoutPlanForm() {
                   </FormItem>
                 )}
               />
+
+              {form.watch('split') === 'custom' && (
+                <FormField
+                  control={form.control}
+                  name="customSplitConfig"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <CustomSplitBuilder
+                          value={field.value}
+                          onChange={field.onChange}
+                          maxDays={form.watch('daysPerWeek') || 7}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="break-inside-avoid mb-6">
             <CardHeader>
               <CardTitle>Equipment & Limitations</CardTitle>
               <CardDescription>
@@ -325,7 +347,7 @@ export function GenerateWorkoutPlanForm() {
                 render={() => (
                   <FormItem>
                     <FormLabel>Available Equipment</FormLabel>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                       {EQUIPMENT_OPTIONS.map((equipment) => (
                         <FormField
                           key={equipment}
@@ -375,7 +397,7 @@ export function GenerateWorkoutPlanForm() {
                 render={() => (
                   <FormItem>
                     <FormLabel>Injuries or Areas to Avoid</FormLabel>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                       {COMMON_INJURIES.map((injury) => (
                         <FormField
                           key={injury}
@@ -421,29 +443,33 @@ export function GenerateWorkoutPlanForm() {
             </CardContent>
           </Card>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              className="flex-1 order-2 sm:order-1 cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isGenerating} className="flex-1 order-1 sm:order-2 cursor-pointer">
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                'Generate Workout Plan'
-              )}
-            </Button>
+          {/* Buttons inside masonry grid */}
+          <div className="break-inside-avoid mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                className="w-full sm:w-auto order-2 sm:order-1 cursor-pointer min-w-[120px]"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isGenerating} className="w-full sm:w-auto order-1 sm:order-2 cursor-pointer min-w-[200px]">
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Workout Plan'
+                )}
+              </Button>
+            </div>
           </div>
+          </div>
+          {/* End masonry grid */}
         </form>
       </Form>
-      </div>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { UserProvider } from "@/contexts/user-context";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarLayoutProvider } from "@/components/sidebar-layout-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -52,12 +53,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <UserProvider>
-            <SidebarLayoutProvider>
-              {children}
-            </SidebarLayoutProvider>
-            <Toaster />
-          </UserProvider>
+          <QueryProvider>
+            <UserProvider>
+              <SidebarLayoutProvider>
+                {children}
+              </SidebarLayoutProvider>
+              <Toaster />
+            </UserProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

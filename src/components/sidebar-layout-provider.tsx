@@ -13,7 +13,8 @@ const sidebarPages = [
   '/profile', 
   '/settings',
   '/workout-plans',
-  '/meal-plans'
+  '/meal-plans',
+  '/exercises'
 ]
 
 interface SidebarLayoutProviderProps {
@@ -42,6 +43,7 @@ export function SidebarLayoutProvider({ children }: SidebarLayoutProviderProps) 
               {pathname.startsWith('/settings') && 'Settings'}
               {pathname.startsWith('/workout-plans') && 'Workout Plans'}
               {pathname.startsWith('/meal-plans') && 'Meal Plans'}
+              {pathname.startsWith('/exercises') && 'Exercise Library'}
             </h1>
           </div>
         </header>
