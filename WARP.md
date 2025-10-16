@@ -4,8 +4,8 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 **Project:** Gym Bro - AI-powered fitness and nutrition companion  
 **Repository:** https://github.com/doofx0071/gym-bro  
-**Status:** Production Ready + Phase 3 Complete (as of October 2025)  
-**Last Updated:** October 15, 2025
+**Status:** Production Ready + Phase 3.5 Complete (as of October 2025)  
+**Last Updated:** October 16, 2025
 
 ## Tech Stack
 
@@ -16,6 +16,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 - **Shadcn UI** (New York style) + Magic UI components
 - **Supabase** (Auth, Postgres, Storage)
 - **Unsplash API** for fitness images
+- **ExerciseDB API** for 1300+ exercises with GIFs
 - **AI Services** - Mistral AI (mistral-large-latest for plan generation)
 
 ## Common Commands
@@ -204,9 +205,22 @@ vercel env pull .env.local
 ✅ **Custom 404 page** with Gym Bro branding and contextual navigation  
 ✅ **Complete database schema** with RLS policies and proper constraints  
 ✅ **Error handling improvements** in user context with retry loop prevention  
-✅ **AI Integration Complete** - Dual AI setup with Groq + Mistral AI services
+✅ **AI Integration Complete** - Dual AI setup with Groq + Mistral AI services  
+✅ **ExerciseDB Integration** - 1300+ exercises with GIFs and alternative suggestions
 
 ## Recent Updates (October 2025)
+
+### ✅ Phase 3.5: ExerciseDB Integration & Alternative Exercises Complete (October 16, 2025)
+- **ExerciseDB API Integration**: 1300+ exercises with animated GIFs and detailed metadata
+- **Exercise Library Page**: Searchable, filterable exercise catalog with infinite scroll
+- **Exercise Detail Pages**: Full exercise info with GIFs, muscles worked, equipment, instructions
+- **Alternative Exercise Suggestions**: Smart recommendations based on target muscles, body parts, equipment
+- **Workout Exercise Cards Enhanced**: Collapsible alternatives section on workout plan cards
+- **Mobile Responsive Layout**: Full-width exercise pages, sidebar for desktop, optimized touch targets
+- **Cursor Pointer UX**: Consistent pointer styling across all interactive elements
+- **API Routes**: `/api/exercises/[id]` and `/api/exercises/[id]/alternatives`
+- **Type-Safe Integration**: Complete TypeScript types with Exercise and ExerciseDB interfaces
+- **Helper Library**: `exercisedb-helper.ts` with similarity algorithms and mapping utilities
 
 ### ✅ Phase 3: Dashboard Enhancements & Plan Management Complete (October 15, 2025)
 - **Today's Meal Card**: Dashboard card showing current day's meals from active plan
@@ -258,9 +272,9 @@ See `mds/` folder for detailed documentation:
 
 ---
 
-**Status:** Production Ready + Phase 3 Complete (Dashboard Enhancements & Plan Management)  
-**Last Updated:** October 15, 2025  
-**Next Phase:** Advanced features (progress tracking, plan editing, social features)
+**Status:** Production Ready + Phase 3.5 Complete (ExerciseDB Integration + Alternative Exercises)  
+**Last Updated:** October 16, 2025  
+**Next Phase:** Advanced features (progress tracking, plan editing, social features, USDA nutrition)
 
 ## AI Usage Quick Start
 
