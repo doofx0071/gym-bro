@@ -50,8 +50,12 @@ export function WorkoutLogger({ exercises, planLabel, onComplete }: WorkoutLogge
       const data = await res.json();
       if (data.success) {
         setSessionId(data.session.id);
-        // Fetch history for all exercises
-        await Promise.all(exercises.map(ex => fetchHistory(ex.exerciseId)));
+        // Fetch history for all exercises (skip if no exerciseId)
+        await Promise.all(
+          exercises
+            .filter(ex => ex.exerciseId && ex.exerciseId.trim())
+            .map(ex => fetchHistory(ex.exerciseId))
+        );
       }
     } catch (err) {
       console.error('Failed to start session:', err);
@@ -61,6 +65,7 @@ export function WorkoutLogger({ exercises, planLabel, onComplete }: WorkoutLogge
   }
 
   async function fetchHistory(exerciseId: string) {
+    if (!exerciseId || !exerciseId.trim()) return; // Skip if empty
     try {
       const res = await fetch(`/api/progress/history?exercise_id=${exerciseId}`);
       const data = await res.json();
@@ -124,20 +129,21 @@ export function WorkoutLogger({ exercises, planLabel, onComplete }: WorkoutLogge
         <span>Session active • Track your sets below</span>
       </div>
 
-      {exercises.map((exercise) => {
+      {exercises.map((exercise, index) => {
+        const exerciseKey = exercise.exerciseId || `exercise-${index}`;
         const lastWorkout = getLastWorkout(exercise.exerciseId);
         const currentLogs = logs[exercise.exerciseId] || [];
         const setsCompleted = currentLogs.length;
 
         return (
           <ExerciseLogger
-            key={exercise.exerciseId}
+            key={exerciseKey}
             exercise={exercise}
             lastWorkout={lastWorkout}
             currentLogs={currentLogs}
             setsCompleted={setsCompleted}
             onLogSet={(setNum, reps, weight) =>
-              logSet(exercise.exerciseId, exercise.name, setNum, reps, weight)
+              logSet(exercise.exerciseId || `manual-${index}`, exercise.name, setNum, reps, weight)
             }
           />
         );
@@ -154,7 +160,7 @@ export function WorkoutLogger({ exercises, planLabel, onComplete }: WorkoutLogge
 
 interface ExerciseLoggerProps {
   exercise: Exercise;
-  lastWorkout: { session_date: string; sets: any[] } | null;
+  lastWorkout: { session_date: string; sets: Array<{ set_number: number; reps: number | null; weight_kg: number | null; rpe: number | null }> } | null;
   currentLogs: SetLog[];
   setsCompleted: number;
   onLogSet: (setNum: number, reps: number, weight: number) => void;
@@ -165,26 +171,36 @@ function ExerciseLogger({ exercise, lastWorkout, currentLogs, setsCompleted, onL
   const [weight, setWeight] = useState('');
   const currentSet = setsCompleted + 1;
 
+  // Detect if exercise needs weight (exclude bodyweight, cardio, stretching)
+  const needsWeight = !exercise.name.toLowerCase().match(
+    /jumping|jack|stretch|warmup|cool.*down|arm circle|leg swing|plank|burpee|mountain climber|high knee|butt kick|cardio/i
+  );
+
   function handleLog() {
-    if (!reps || !weight) return;
-    onLogSet(currentSet, parseInt(reps), parseFloat(weight));
+    if (!reps) return;
+    if (needsWeight && !weight) return;
+    onLogSet(currentSet, parseInt(reps), parseFloat(weight) || 0);
     setReps('');
     setWeight('');
   }
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center justify-between">
-          <span className="truncate">{exercise.name}</span>
-          <span className="text-sm font-normal text-muted-foreground">
-            {setsCompleted}/{exercise.sets} sets
+      <CardHeader className="pb-3 sm:pb-4">
+        <CardTitle className="text-sm sm:text-base md:text-lg flex items-start sm:items-center justify-between gap-2">
+          <span className="break-words flex-1 leading-tight">{exercise.name}</span>
+          <span className="text-xs sm:text-sm font-normal text-muted-foreground whitespace-nowrap flex-shrink-0">
+            {setsCompleted}/{exercise.sets}
           </span>
         </CardTitle>
-        {lastWorkout && (
+        {lastWorkout && lastWorkout.sets.length > 0 && (
           <div className="text-xs text-muted-foreground flex items-center gap-1">
             <TrendingUp className="w-3 h-3" />
-            Last: {lastWorkout.sets.map(s => `${s.reps || 0} × ${s.weight_kg || 0}kg`).join(', ')}
+            Last: {lastWorkout.sets.map(s => 
+              s.weight_kg && s.weight_kg > 0 
+                ? `${s.reps || 0} × ${s.weight_kg}kg` 
+                : `${s.reps || 0} reps`
+            ).join(', ')}
           </div>
         )}
       </CardHeader>
@@ -195,7 +211,9 @@ function ExerciseLogger({ exercise, lastWorkout, currentLogs, setsCompleted, onL
             <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
             <span className="text-muted-foreground">Set {log.set_number}:</span>
             <span className="font-medium">
-              {log.reps} reps × {log.weight_kg}kg
+              {log.weight_kg && log.weight_kg > 0 
+                ? `${log.reps} reps × ${log.weight_kg}kg` 
+                : `${log.reps} reps`}
             </span>
           </div>
         ))}
@@ -207,23 +225,32 @@ function ExerciseLogger({ exercise, lastWorkout, currentLogs, setsCompleted, onL
               <Circle className="w-4 h-4 flex-shrink-0" />
               <span>Set {currentSet}</span>
             </div>
-            <div className="grid grid-cols-[1fr,1fr,auto] gap-2">
+            <div className={`grid gap-2 sm:gap-3 ${needsWeight ? 'grid-cols-[1fr,1fr,auto]' : 'grid-cols-[1fr,auto]'}`}>
               <Input
                 type="number"
                 placeholder="Reps"
                 value={reps}
                 onChange={(e) => setReps(e.target.value)}
-                className="text-center"
+                className="text-center text-base h-10 sm:h-9"
+                inputMode="numeric"
               />
-              <Input
-                type="number"
-                placeholder="Weight (kg)"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                className="text-center"
-                step="0.5"
-              />
-              <Button onClick={handleLog} disabled={!reps || !weight} size="sm">
+              {needsWeight && (
+                <Input
+                  type="number"
+                  placeholder="Weight (kg)"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  className="text-center text-base h-10 sm:h-9"
+                  step="0.5"
+                  inputMode="decimal"
+                />
+              )}
+              <Button 
+                onClick={handleLog} 
+                disabled={!reps || (needsWeight && !weight)} 
+                size="sm"
+                className="h-10 sm:h-9 px-3 sm:px-4"
+              >
                 Log
               </Button>
             </div>

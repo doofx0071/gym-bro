@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, use } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useUser } from "@/contexts/user-context"
 import { getWorkoutPlanByIdClient } from "@/lib/data/plans-client"
+import { resetCircuitBreaker } from "@/lib/apis/exercisedb"
 import type { WorkoutPlanData } from "@/types/plans"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -132,6 +133,11 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
       setIsDeleting(false)
     }
   }
+
+  // Reset circuit breaker on mount to ensure exercises can load
+  useEffect(() => {
+    resetCircuitBreaker();
+  }, []);
 
   // Wait for auth to fully initialize before making redirect decisions
   useEffect(() => {
@@ -445,7 +451,7 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
                             {day.isRestDay ? (
                               <Badge variant="outline">Rest Day</Badge>
                             ) : (
@@ -455,15 +461,19 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
                                 </Badge>
                                 <Sheet open={activeLoggerDay === day.dayIndex} onOpenChange={(open) => setActiveLoggerDay(open ? day.dayIndex : null)}>
                                   <SheetTrigger asChild>
-                                    <Button size="sm" className="cursor-pointer">
+                                    <Button 
+                                      size="sm" 
+                                      variant={isToday ? "default" : "outline"}
+                                      className="cursor-pointer"
+                                    >
                                       <Dumbbell className="h-4 w-4 mr-2" />
-                                      Start Workout
+                                      {isToday ? "Start Today's Workout" : "Log Workout"}
                                     </Button>
                                   </SheetTrigger>
-                                  <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-                                    <SheetHeader className="mb-4">
-                                      <SheetTitle>{day.dayLabel} Workout</SheetTitle>
-                                      <SheetDescription>
+                                  <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-4 sm:p-6 pb-24 sm:pb-6">
+                                    <SheetHeader className="mb-4 sm:mb-6">
+                                      <SheetTitle className="text-lg sm:text-xl">{day.dayLabel} Workout</SheetTitle>
+                                      <SheetDescription className="text-sm">
                                         Log your sets and track your progress
                                       </SheetDescription>
                                     </SheetHeader>
@@ -471,7 +481,7 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
                                       exercises={
                                         day.blocks?.flatMap(block => 
                                           block.exercises.map(ex => ({
-                                            exerciseId: ex.exercisedb_id || '',
+                                            exerciseId: ex.exerciseId || '',
                                             name: ex.name,
                                             sets: ex.sets || 3,
                                             reps: ex.reps || '8-10',

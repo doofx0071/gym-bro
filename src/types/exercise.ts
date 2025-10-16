@@ -4,7 +4,19 @@
  * Documentation: https://edb-docs.up.railway.app/
  */
 
-// V1 API Exercise Structure
+// Raw API Response (API now returns arrays!)
+export interface RawExerciseFromAPI {
+  exerciseId: string;
+  name: string;
+  gifUrl: string;
+  targetMuscles: string[];        // API returns ["upper back"]
+  bodyParts: string[];            // API returns ["back"]
+  equipments: string[];           // API returns ["body weight"]
+  secondaryMuscles: string[];     // API returns ["biceps", "forearms"]
+  instructions: string[];         // API returns ["Step:1 ...", "Step:2 ..."]
+}
+
+// Transformed Exercise (arrays for easier use)
 export interface Exercise {
   exerciseId: string;             // e.g., "VPPtusI"
   name: string;
@@ -16,7 +28,20 @@ export interface Exercise {
   instructions: string[];         // Step-by-step instructions
 }
 
-// V1 API Response Structure
+// V1 API Response Structure (raw from API)
+export interface RawExerciseAPIResponse {
+  success: boolean;
+  metadata: {
+    totalPages: number;
+    totalExercises: number;
+    currentPage: number;
+    previousPage: string | null;
+    nextPage: string | null;
+  };
+  data: RawExerciseFromAPI[];
+}
+
+// Processed API Response (transformed for use)
 export interface ExerciseAPIResponse {
   success: boolean;
   metadata: {

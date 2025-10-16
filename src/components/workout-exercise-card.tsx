@@ -20,28 +20,34 @@ export function WorkoutExerciseCard({ exercise, index }: WorkoutExerciseCardProp
   const [showInstructions, setShowInstructions] = useState(false)
   const [showAlternatives, setShowAlternatives] = useState(false)
   
-  // Only fetch ExerciseDB data if exerciseId is provided
+// Check if exercise ID exists (accept both 4-digit and 7-character alphanumeric IDs)
+  const isValidExerciseId = Boolean(exercise.exerciseId && (/^\d{4}$/.test(exercise.exerciseId) || /^[a-zA-Z0-9]{7}$/.test(exercise.exerciseId)))
+
+  // Use the exercise ID if it's valid
+  const resolvedId: string | undefined = isValidExerciseId && exercise.exerciseId ? exercise.exerciseId : undefined
+  
+  // Fetch ExerciseDB data using resolved ID (if available)
   const { data: exerciseData, isLoading, error } = useQuery({
-    queryKey: ['exercise', exercise.exerciseId],
-    queryFn: () => getExerciseById(exercise.exerciseId!),
-    enabled: !!exercise.exerciseId,
+    queryKey: ['exercise', resolvedId],
+    queryFn: () => getExerciseById(resolvedId!),
+    enabled: Boolean(resolvedId),
     staleTime: 1000 * 60 * 60, // 1 hour
   })
 
-  // Fetch alternatives when user expands the section
+// Fetch alternatives when user expands the section (only when we have a resolved ID)
   const { data: alternatives, isLoading: altLoading } = useQuery<{ alternatives: Exercise[] }>({
-    queryKey: ['alternatives', exercise.exerciseId],
+    queryKey: ['alternatives', resolvedId],
     queryFn: async () => {
-      const response = await fetch(`/api/exercises/${exercise.exerciseId}/alternatives`)
+      const response = await fetch(`/api/exercises/${resolvedId}/alternatives`)
       if (!response.ok) throw new Error('Failed to fetch alternatives')
       return response.json()
     },
-    enabled: showAlternatives && !!exercise.exerciseId,
+    enabled: showAlternatives && Boolean(resolvedId),
     staleTime: 1000 * 60 * 60, // 1 hour
   })
 
-  // Show loading state while fetching ExerciseDB data
-  if (isLoading && exercise.exerciseId) {
+  // Show loading state while fetching ExerciseDB data (only for valid IDs)
+  if (isLoading && isValidExerciseId) {
     return (
       <div className="border rounded-lg p-3 sm:p-4 bg-background/50">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -90,8 +96,8 @@ export function WorkoutExerciseCard({ exercise, index }: WorkoutExerciseCardProp
                 <h5 className="text-sm sm:text-base font-medium">{exercise.name}</h5>
               </div>
               
-              {/* Show ExerciseDB link if we have the data */}
-              {exerciseData && exercise.exerciseId && (
+              {/* Show ExerciseDB link if we have valid data */}
+{exerciseData && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
@@ -103,7 +109,7 @@ export function WorkoutExerciseCard({ exercise, index }: WorkoutExerciseCardProp
                     className="h-auto p-0 hover:text-primary text-xs"
                     asChild
                   >
-                    <Link href={`/exercises/${exercise.exerciseId}`}>
+                    <Link href={`/exercises/${resolvedId}`}>
                       <Info className="h-3 w-3 mr-1" />
                       Details
                       <ExternalLink className="h-3 w-3 ml-1" />
@@ -191,16 +197,18 @@ export function WorkoutExerciseCard({ exercise, index }: WorkoutExerciseCardProp
               
               {showInstructions && (
                 <ol className="mt-2 space-y-1 text-xs sm:text-sm list-decimal list-inside text-muted-foreground">
-                  {exerciseData.instructions.map((instruction, i) => (
-                    <li key={i} className="pl-1">{instruction}</li>
-                  ))}
+                  {exerciseData.instructions.map((instruction, i) => {
+                    // Clean up instruction text - remove "Step:X" or "Step X" prefix if present
+                    const cleanedInstruction = instruction.replace(/^Step[:\s]*\d+[:\s]*/i, '').trim()
+                    return <li key={i} className="pl-1">{cleanedInstruction}</li>
+                  })}
                 </ol>
               )}
             </div>
           )}
           
-          {/* Alternative Exercises - Collapsible */}
-          {exercise.exerciseId && (
+          {/* Alternative Exercises - Collapsible (only for valid ExerciseDB IDs) */}
+{Boolean(resolvedId) && (
             <div>
               <Button
                 variant="ghost"
@@ -215,16 +223,16 @@ export function WorkoutExerciseCard({ exercise, index }: WorkoutExerciseCardProp
               {showAlternatives && (
                 <div className="mt-2 space-y-2">
                   {altLoading ? (
-                    <div className="text-xs text-muted-foreground">Loading alternatives...</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Loading alternatives...</div>
                   ) : alternatives?.alternatives && alternatives.alternatives.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-2 sm:space-y-3">
                       {alternatives.alternatives.slice(0, 3).map((alt) => (
                         <Link 
                           key={alt.exerciseId} 
                           href={`/exercises/${alt.exerciseId}`}
-                          className="flex items-start gap-2 p-2 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer"
+                          className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer active:scale-[0.98]"
                         >
-                          <div className="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-muted">
+                          <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded overflow-hidden bg-muted">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                               src={alt.gifUrl} 
@@ -234,21 +242,21 @@ export function WorkoutExerciseCard({ exercise, index }: WorkoutExerciseCardProp
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs sm:text-sm font-medium truncate">{alt.name}</p>
-                            <div className="flex flex-wrap gap-1 mt-1">
+                            <p className="text-sm sm:text-base font-medium line-clamp-2">{alt.name}</p>
+                            <div className="flex flex-wrap gap-1 mt-2">
                               {alt.equipments?.slice(0, 2).map((equip, i) => (
-                                <Badge key={i} variant="outline" className="text-[9px] px-1 py-0 capitalize">
+                                <Badge key={i} variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0.5 capitalize">
                                   {equip}
                                 </Badge>
                               ))}
                             </div>
                           </div>
-                          <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                          <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
                         </Link>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">No alternatives found</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">No alternatives found</p>
                   )}
                 </div>
               )}
@@ -263,8 +271,8 @@ export function WorkoutExerciseCard({ exercise, index }: WorkoutExerciseCardProp
             </div>
           )}
           
-          {/* Error State */}
-          {error && exercise.exerciseId && (
+          {/* Error State (only for valid IDs) */}
+          {error && isValidExerciseId && (
             <div className="text-xs text-muted-foreground">
               Could not load exercise details from database
             </div>

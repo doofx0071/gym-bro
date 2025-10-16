@@ -1,3 +1,5 @@
+'use client';
+
 import { WorkoutLogger } from '@/components/workout/WorkoutLogger';
 
 export default function WorkoutLoggerTestPage() {

@@ -216,6 +216,17 @@ vercel env pull .env.local
 
 ## Recent Updates (October 2025)
 
+### 🔥 Latest Fixes (October 16, 2025)
+- **ExerciseDB API Integration**: Fixed array response handling for V1 API
+- **Circuit Breaker Pattern**: Implemented with reset for robust API calls
+- **Pagination**: Fixed exercises page with 25 items per page limit
+- **Alternative Exercises**: Rewrote using filter endpoint with AI fallback logic
+- **Mobile Responsiveness**: Improved "View Alternative Exercises" section
+- **Instructions UI**: Cleaned up formatting, removed redundant numbering
+- **Skeleton Loaders**: Standardized styling to match dashboard colors
+- **Debug Logging**: Added comprehensive API call tracing
+- **GIFs & Instructions**: Ensured proper display across all workout plans
+
 ### ✅ Phase 4: USDA FoodData Central Integration Complete (October 16, 2025)
 - **USDA API Integration**: 400,000+ verified food items with comprehensive nutrition data
 - **Meal Validation Service**: AI-generated meals validated against USDA database for accuracy

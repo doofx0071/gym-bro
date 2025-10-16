@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getAllExercises, searchExercisesByName, getExercisesByBodyPart, getExercisesByEquipment } from '@/lib/apis/exercisedb'
+import { getAllExercises, searchExercisesByName, getExercisesByBodyPart, getExercisesByEquipment, resetCircuitBreaker } from '@/lib/apis/exercisedb'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,12 @@ export default function ExercisesPage() {
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('all')
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all')
   const [page, setPage] = useState(0)
-  const limit = 20
+  const limit = 25 // API max limit is 25 per page
+
+  // Reset circuit breaker on mount to give API a fresh start
+  useEffect(() => {
+    resetCircuitBreaker();
+  }, []);
 
   // Determine which query to use based on filters
   const getQueryFn = () => {

@@ -51,9 +51,26 @@ export async function GET(req: NextRequest) {
     }
 
     // Group by session_date
-    const byDate = new Map<string, any[]>();
+    interface WorkoutSessionData {
+      session_date: string;
+    }
+    
+    interface SetLogWithSession {
+      session_id: string;
+      exercise_id: string;
+      exercise_name: string;
+      set_number: number;
+      reps: number;
+      weight_kg: number | null;
+      rpe: number | null;
+      created_at: string;
+      workout_sessions: WorkoutSessionData;
+    }
+    
+    const byDate = new Map<string, Array<{ set_number: number; reps: number; weight_kg: number | null; rpe: number | null }>>();
     for (const r of rows ?? []) {
-      const date = (r as any).workout_sessions.session_date as string;
+      const row = r as unknown as SetLogWithSession;
+      const date = row.workout_sessions.session_date;
       if (!byDate.has(date)) byDate.set(date, []);
       byDate.get(date)!.push({
         set_number: r.set_number,

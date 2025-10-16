@@ -7,7 +7,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Badge } from '@/components/ui/badge'
 
 interface NutritionBadgeProps {
   verified: boolean
