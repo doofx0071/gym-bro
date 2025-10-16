@@ -13,7 +13,9 @@ interface MealVerificationBadgeProps {
  * Wrapper around NutritionBadge that works with our USDAValidation type
  */
 export function MealVerificationBadge({ validation, className }: MealVerificationBadgeProps) {
-  if (!validation || !validation.verified) {
+  // Show badge for all meals that went through validation
+  // Even if verification failed, show it with appropriate confidence level
+  if (!validation) {
     return null
   }
 
