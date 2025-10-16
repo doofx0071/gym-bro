@@ -25,6 +25,15 @@ import { ArrowLeft, Clock, Target, Dumbbell, Calendar, RefreshCw, Trash2 } from 
 import Link from "next/link"
 import { toast } from "sonner"
 import { WorkoutExerciseCard } from "@/components/workout-exercise-card"
+import { WorkoutLogger } from "@/components/workout/WorkoutLogger"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 
 interface WorkoutPlanPageProps {
   params: Promise<{ id: string }>
@@ -41,6 +50,7 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
   const [error, setError] = useState<string | null>(null)
   const [isRegenerating, setIsRegenerating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [activeLoggerDay, setActiveLoggerDay] = useState<number | null>(null)
   const isGenerating = searchParams.get('generating') === 'true'
 
   // Get current day index (0 = Monday, 1 = Tuesday, ..., 6 = Sunday)
@@ -435,13 +445,50 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
                               </Badge>
                             )}
                           </div>
-                          {day.isRestDay ? (
-                            <Badge variant="outline" className="self-start sm:self-auto">Rest Day</Badge>
-                          ) : (
-                            <Badge variant="secondary" className="self-start sm:self-auto">
-                              {day.totalTime ? `${day.totalTime} min` : 'Workout'}
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                            {day.isRestDay ? (
+                              <Badge variant="outline">Rest Day</Badge>
+                            ) : (
+                              <>
+                                <Badge variant="secondary">
+                                  {day.totalTime ? `${day.totalTime} min` : 'Workout'}
+                                </Badge>
+                                <Sheet open={activeLoggerDay === day.dayIndex} onOpenChange={(open) => setActiveLoggerDay(open ? day.dayIndex : null)}>
+                                  <SheetTrigger asChild>
+                                    <Button size="sm" className="cursor-pointer">
+                                      <Dumbbell className="h-4 w-4 mr-2" />
+                                      Start Workout
+                                    </Button>
+                                  </SheetTrigger>
+                                  <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+                                    <SheetHeader className="mb-4">
+                                      <SheetTitle>{day.dayLabel} Workout</SheetTitle>
+                                      <SheetDescription>
+                                        Log your sets and track your progress
+                                      </SheetDescription>
+                                    </SheetHeader>
+                                    <WorkoutLogger
+                                      exercises={
+                                        day.blocks?.flatMap(block => 
+                                          block.exercises.map(ex => ({
+                                            exerciseId: ex.exercisedb_id || '',
+                                            name: ex.name,
+                                            sets: ex.sets || 3,
+                                            reps: ex.reps || '8-10',
+                                          }))
+                                        ) || []
+                                      }
+                                      planLabel={`${plan.title} - ${day.dayLabel}`}
+                                      onComplete={() => {
+                                        setActiveLoggerDay(null)
+                                        toast.success('Workout completed! Great job! 💪')
+                                      }}
+                                    />
+                                  </SheetContent>
+                                </Sheet>
+                              </>
+                            )}
+                          </div>
                         </CardTitle>
                         {day.focus && (
                           <p className="text-xs sm:text-sm text-muted-foreground">{day.focus}</p>
