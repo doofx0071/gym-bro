@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { LogoLoader } from "@/components/logo-loader"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { MealVerificationBadge } from "@/components/nutrition/MealVerificationBadge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -481,7 +482,10 @@ export default function MealPlanPage({ params: paramsPromise }: MealPlanPageProp
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                             <div className="flex-1">
                               <div className="flex items-start justify-between sm:block">
-                                <CardTitle className="text-base sm:text-lg">{meal.name}</CardTitle>
+                                <CardTitle className="text-base sm:text-lg flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                  <span className="break-words">{meal.name}</span>
+                                  <MealVerificationBadge validation={meal.usdaValidation} />
+                                </CardTitle>
                                 <Badge variant="outline" className="sm:hidden">{meal.timeOfDay}</Badge>
                               </div>
                               <p className="text-xs sm:text-sm text-muted-foreground mt-1">

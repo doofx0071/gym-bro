@@ -34,6 +34,17 @@ export const GroceryItemSchema = z.object({
   notes: z.string().optional()
 }) satisfies z.ZodType<GroceryItem>
 
+// USDA Validation Schema
+export const USDAValidationSchema = z.object({
+  fdcId: z.number().optional(),
+  verified: z.boolean(),
+  actualCalories: z.number().optional(),
+  actualProtein: z.number().optional(),
+  actualCarbs: z.number().optional(),
+  actualFat: z.number().optional(),
+  confidence: z.enum(['high', 'medium', 'low'])
+})
+
 // Meal Plan Schemas
 export const MealDetailSchema = z.object({
   name: z.string().min(1),
@@ -43,7 +54,8 @@ export const MealDetailSchema = z.object({
   ingredients: z.array(z.string().min(1)),
   instructions: z.array(z.string().min(1)),
   prepTime: z.number().min(0),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  usdaValidation: USDAValidationSchema.optional() // Add USDA validation field
 }) satisfies z.ZodType<MealDetail>
 
 export const DayMealsSchema = z.object({
@@ -69,6 +81,8 @@ export const MealPlanDataSchema = z.object({
   model: z.string().optional().nullable(),
   prompt: z.string().optional().nullable(),
   error: z.string().optional().nullable(),
+  validation_status: z.enum(['pending', 'validated', 'failed']).optional(), // USDA validation status
+  validation_confidence: z.number().min(0).max(100).optional(), // USDA validation confidence (0-100)
   created_at: z.date(),
   updated_at: z.date(),
   started_at: z.date().optional(),

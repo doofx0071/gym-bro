@@ -518,6 +518,14 @@ MACRO TARGET EMPHASIS:
 - Target ${targetMacros.fats}g fats daily - balance coconut-based and lean preparations
 - Distribute macros evenly across meals OR front-load protein for muscle building goals
 
+NUTRITION VALIDATION REQUIREMENTS:
+- Use clear, standard ingredient names that can be found in USDA FoodData Central
+- For Filipino dishes, use English names when possible (e.g., "pork adobo" not just "adobo")
+- Specify ingredient forms clearly (e.g., "chicken breast, skinless" instead of just "chicken")
+- Include preparation method in ingredient if relevant (e.g., "rice, cooked" vs "rice, uncooked")
+- Use specific protein cuts (e.g., "pork belly", "chicken thigh", "beef sirloin")
+- This helps with automated nutrition verification against USDA database
+
 IMPORTANT: 
 1. Return ONLY the JSON object. No explanations, no additional text, no markdown formatting.
 2. Create 7 COMPLETE and DIFFERENT days, not repeated patterns
@@ -525,7 +533,8 @@ IMPORTANT:
 4. Focus exclusively on Filipino cuisine and ingredients
 5. Ensure each meal has authentic Filipino flavors and cooking methods
 6. RESPECT the cooking skill level - don't make it too complex or too simple
-7. Ensure daily macro totals match the targets (±5% tolerance)`
+7. Ensure daily macro totals match the targets (±5% tolerance)
+8. Use USDA-compatible ingredient naming for accurate nutrition tracking`
 
     // Use Mistral for reliable JSON generation
     const aiResponse = await callAI(

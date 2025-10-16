@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateMealPlan } from '@/lib/ai'
+import { validateMealPlan } from '@/lib/nutrition/meal-validation'
 import { GenerateMealPlanInputSchema } from '@/lib/validation/plans'
 import { getWeekStartDate } from '@/lib/utils/date'
 import type { UserProfile } from '@/types'
@@ -31,15 +32,37 @@ async function generateMealPlanInBackground(
     const aiResult = await generateMealPlan(input, userProfile)
     
     if (aiResult.success) {
-      // Update the meal plan record with the generated data
+      console.log('Meal plan generated successfully, starting USDA validation...')
+      
+      // Validate meal plan with USDA API
+      let validatedData = aiResult.data
+      let validation_status: 'pending' | 'validated' | 'failed' = 'pending'
+      let validation_confidence = 0
+      
+      try {
+        const validationResult = await validateMealPlan(aiResult.data)
+        validatedData = validationResult.validatedPlan
+        validation_status = validationResult.overallConfidence > 40 ? 'validated' : 'failed'
+        validation_confidence = validationResult.overallConfidence
+        
+        console.log(`USDA Validation complete: ${validationResult.validatedCount}/${validationResult.totalMeals} meals validated, ${validation_confidence}% confidence`)
+      } catch (validationError) {
+        console.error('USDA validation failed:', validationError)
+        validation_status = 'failed'
+        // Continue with unvalidated data rather than failing completely
+      }
+      
+      // Update the meal plan record with the generated and validated data
       const updateData = {
-        title: aiResult.data.title,
-        goal: aiResult.data.goal,
-        calories: aiResult.data.calories,
-        macros: aiResult.data.macros,
-        days: aiResult.data.days,
+        title: validatedData.title,
+        goal: validatedData.goal,
+        calories: validatedData.calories,
+        macros: validatedData.macros,
+        days: validatedData.days,
         groceryList: [], // Always empty - we don't need grocery lists
         status: 'completed',
+        validation_status,
+        validation_confidence,
         completed_at: new Date(),
         updated_at: new Date(),
         model: 'mistral'

@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 **Project:** Gym Bro - AI-powered fitness and nutrition companion  
 **Repository:** https://github.com/doofx0071/gym-bro  
-**Status:** Production Ready + Phase 3.5 Complete (as of October 2025)  
+**Status:** Production Ready + Phase 4 Complete (USDA Integration) (as of October 2025)  
 **Last Updated:** October 16, 2025
 
 ## Tech Stack
@@ -16,7 +16,8 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 - **Shadcn UI** (New York style) + Magic UI components
 - **Supabase** (Auth, Postgres, Storage)
 - **Unsplash API** for fitness images
-- **ExerciseDB API** for 1300+ exercises with GIFs
+- **ExerciseDB API** for 1300+ exercises with GIFs (self-hosted V1)
+- **USDA FoodData Central API** for nutrition validation (400,000+ food items)
 - **AI Services** - Mistral AI (mistral-large-latest for plan generation)
 
 ## Common Commands
@@ -84,6 +85,10 @@ GROQ_API_KEY=your_groq_api_key_here  # Optional - used as fallback
 MISTRAL_API_KEY=your_mistral_api_key_here  # Required for plan generation
 GROQ_MODEL=llama-3.1-8b-instant
 MISTRAL_MODEL=mistral-large-latest
+
+# USDA FoodData Central (required for nutrition validation)
+NEXT_PUBLIC_USDA_API_KEY=your_usda_api_key_here
+USDA_API_KEY=your_usda_api_key_here
 
 # Optional
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -206,9 +211,22 @@ vercel env pull .env.local
 ✅ **Complete database schema** with RLS policies and proper constraints  
 ✅ **Error handling improvements** in user context with retry loop prevention  
 ✅ **AI Integration Complete** - Dual AI setup with Groq + Mistral AI services  
-✅ **ExerciseDB Integration** - 1300+ exercises with GIFs and alternative suggestions
+✅ **ExerciseDB Integration** - 1300+ exercises with GIFs and alternative suggestions  
+✅ **USDA Nutrition Validation** - Meal plans validated against 400,000+ verified foods
 
 ## Recent Updates (October 2025)
+
+### ✅ Phase 4: USDA FoodData Central Integration Complete (October 16, 2025)
+- **USDA API Integration**: 400,000+ verified food items with comprehensive nutrition data
+- **Meal Validation Service**: AI-generated meals validated against USDA database for accuracy
+- **Ingredient Extraction**: Smart parsing extracts ingredients from meal descriptions
+- **Confidence Scoring**: Each meal receives a validation confidence score (0-100%)
+- **Database Migration**: Added `validation_status` and `validation_confidence` columns
+- **Verification Badges**: Visual UI badges show USDA validation status on meal cards
+- **Mobile Responsive Tooltips**: Tap-enabled tooltips with proper contrast in light/dark modes
+- **Enhanced AI Prompts**: Updated to generate USDA-compatible ingredient names
+- **Type-Safe Integration**: Complete TypeScript types for USDA data and validation
+- **Documentation**: Complete integration guide and troubleshooting docs
 
 ### ✅ Phase 3.5: ExerciseDB Integration & Alternative Exercises Complete (October 16, 2025)
 - **ExerciseDB API Integration**: 1300+ exercises with animated GIFs and detailed metadata
@@ -265,16 +283,27 @@ vercel env pull .env.local
 
 ## Documentation
 
-See `mds/` folder for detailed documentation:
-- `COMPLETION_SUMMARY.md` - All recent fixes and testing checklist
-- `updated_summary.md` - Complete project overview and feature list
-- `quick-start-checklist.md` - Step-by-step setup guide
+See `docs/` and `mds/` folders for detailed documentation:
+
+**Current Status:**
+- `docs/implementation-status.md` - ⭐ **Phase completion verification** (Phases 0-4 status)
+- `docs/usda-integration-complete.md` - USDA nutrition validation integration guide
+- `docs/usda-integration-fixes.md` - USDA integration fixes and mobile responsiveness
+- `docs/exercisedb-integration.md` - ExerciseDB API integration details
+- `docs/v1-migration-summary.md` - ExerciseDB V1 migration summary
+
+**Historical Reference:**
+- `mds/COMPLETION_SUMMARY.md` - All recent fixes and testing checklist
+- `mds/updated_summary.md` - Complete project overview and feature list
+- `mds/quick-start-checklist.md` - Step-by-step setup guide
+- `mds/api-integration-roadmap.md` - API integration roadmap (updated October 2025)
 
 ---
 
-**Status:** Production Ready + Phase 3.5 Complete (ExerciseDB Integration + Alternative Exercises)  
+**Status:** Production Ready + Phase 4 Complete (USDA Nutrition Validation)  
 **Last Updated:** October 16, 2025  
-**Next Phase:** Advanced features (progress tracking, plan editing, social features, USDA nutrition)
+**MVP Progress:** 90% Complete  
+**Next Phase:** Phase 5 - Advanced features (progress tracking, Filipino food database, social features, plan editing)
 
 ## AI Usage Quick Start
 

@@ -16,6 +16,16 @@ export interface GroceryItem {
   notes?: string
 }
 
+export interface USDAValidation {
+  fdcId?: number
+  verified: boolean
+  actualCalories?: number
+  actualProtein?: number
+  actualCarbs?: number
+  actualFat?: number
+  confidence: 'high' | 'medium' | 'low'
+}
+
 export interface MealDetail {
   name: string
   timeOfDay: string // e.g., "Breakfast", "Lunch", "Dinner", "Snack 1"
@@ -25,6 +35,7 @@ export interface MealDetail {
   instructions: string[]
   prepTime: number // minutes
   notes?: string
+  usdaValidation?: USDAValidation // USDA nutrition verification data
 }
 
 export interface DayMeals {
@@ -50,6 +61,8 @@ export interface MealPlanData {
   model?: string | null
   prompt?: string | null
   error?: string | null
+  validation_status?: 'pending' | 'validated' | 'failed' // USDA validation status
+  validation_confidence?: number // 0-100 percentage
   created_at: Date
   updated_at: Date
   started_at?: Date

@@ -37,28 +37,30 @@ export function NutritionBadge({
   }
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Badge 
-            variant="outline" 
-            className={`${confidenceColors[confidence]} ${className} cursor-help`}
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className={`inline-flex items-center rounded-md border font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${confidenceColors[confidence]} ${className} cursor-help text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1`}
+            aria-label="View USDA nutrition verification details"
           >
-            <CheckCircle2 className="w-3 h-3 mr-1" />
-            Verified
-            <Info className="w-3 h-3 ml-1" />
-          </Badge>
+            <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1 flex-shrink-0" />
+            <span className="truncate">Verified</span>
+            <Info className="w-2.5 h-2.5 sm:w-3 sm:h-3 ml-0.5 sm:ml-1 flex-shrink-0" />
+          </button>
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs">
-          <div className="space-y-1">
+        <TooltipContent className="max-w-xs sm:max-w-sm bg-popover text-popover-foreground border border-border">
+          <div className="space-y-1.5">
             <p className="font-semibold text-sm">Nutrition Data Verified</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs opacity-90">
               Source: {source}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs opacity-90">
               Confidence: {confidenceLabels[confidence]}
             </p>
-            <p className="text-xs mt-2">
+            <p className="text-xs mt-2 opacity-80">
               This meal&apos;s nutrition data has been validated against verified food databases.
             </p>
           </div>

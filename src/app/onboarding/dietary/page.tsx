@@ -165,8 +165,9 @@ export default function DietaryPreferencesPage() {
                 <FormLabel className="text-lg font-semibold">
                   Any food allergies or intolerances? (Optional)
                 </FormLabel>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
+                    className="flex-1"
                     placeholder="e.g., peanuts, dairy, gluten"
                     value={allergyInput}
                     onChange={(e) => setAllergyInput(e.target.value)}
