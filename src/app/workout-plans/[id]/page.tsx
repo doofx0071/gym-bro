@@ -6,6 +6,7 @@ import { useUser } from "@/contexts/user-context"
 import { getWorkoutPlanByIdClient } from "@/lib/data/plans-client"
 import { resetCircuitBreaker } from "@/lib/apis/exercisedb"
 import type { WorkoutPlanData } from "@/types/plans"
+import type { ExerciseHistory } from "@/lib/types/workout-tracking"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -53,6 +54,16 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
   const [isDeleting, setIsDeleting] = useState(false)
   const [activeLoggerDay, setActiveLoggerDay] = useState<number | null>(null)
   const isGenerating = searchParams.get('generating') === 'true'
+  
+  // Session state for workout logging
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
+  const [isStartingSession, setIsStartingSession] = useState(false)
+  const [sessionLogs, setSessionLogs] = useState<Record<string, Array<{ set_number: number; reps: number; weight_kg: number; completed: boolean }>>>({})
+  const [sessionHistories, setSessionHistories] = useState<Record<string, ExerciseHistory>>({})
+  
+  // Completion status for days
+  const [completedDays, setCompletedDays] = useState<Record<number, boolean>>({})
 
   // Get current day index (0 = Monday, 1 = Tuesday, ..., 6 = Sunday)
   const getCurrentDayIndex = () => {
@@ -134,6 +145,169 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
     }
   }
 
+  // Session management functions
+  const startWorkoutSession = async (dayLabel: string) => {
+    if (sessionId) return // Already have a session
+    
+    setIsStartingSession(true)
+    try {
+      const res = await fetch('/api/progress/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          plan_label: plan ? `${plan.title} - ${dayLabel}` : dayLabel 
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSessionId(data.session.id)
+        setSessionStartTime(Date.now())
+        toast.success('Workout session started!')
+      }
+    } catch (err) {
+      console.error('Failed to start session:', err)
+      toast.error('Failed to start workout session')
+    } finally {
+      setIsStartingSession(false)
+    }
+  }
+
+  const fetchExerciseHistory = async (exerciseId: string) => {
+    if (!exerciseId || !exerciseId.trim() || sessionHistories[exerciseId]) return
+    
+    try {
+      const res = await fetch(`/api/progress/history?exercise_id=${exerciseId}`)
+      const data = await res.json()
+      if (data.success) {
+        setSessionHistories(prev => ({ ...prev, [exerciseId]: data.history }))
+      }
+    } catch (err) {
+      console.error('Failed to fetch history:', err)
+    }
+  }
+
+  const handleLogSet = async (
+    exerciseId: string,
+    exerciseName: string,
+    setNumber: number,
+    reps: number,
+    weight: number
+  ) => {
+    if (!sessionId) return
+    
+    try {
+      const res = await fetch('/api/progress/log-set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          exercise_id: exerciseId,
+          exercise_name: exerciseName,
+          set_number: setNumber,
+          reps,
+          weight_kg: weight,
+          completed: true,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        // Update local logs state
+        setSessionLogs(prev => ({
+          ...prev,
+          [exerciseId]: [
+            ...(prev[exerciseId] || []),
+            { set_number: setNumber, reps, weight_kg: weight, completed: true },
+          ],
+        }))
+        toast.success(`Set ${setNumber} logged!`)
+      }
+    } catch (err) {
+      console.error('Failed to log set:', err)
+      toast.error('Failed to log set')
+    }
+  }
+
+  const handleCompleteWorkout = async () => {
+    if (!sessionId || !sessionStartTime) return
+    
+    const durationMin = Math.round((Date.now() - sessionStartTime) / 60000)
+    
+    try {
+      const res = await fetch(`/api/progress/session/${sessionId}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration_min: durationMin }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(`Workout completed! Duration: ${durationMin} min 💪`)
+        // Reset session state
+        setSessionId(null)
+        setSessionStartTime(null)
+        setSessionLogs({})
+        setSessionHistories({})
+        setActiveLoggerDay(null)
+        // Update completion status for all days
+        checkAllDaysCompletion()
+      }
+    } catch (err) {
+      console.error('Failed to complete workout:', err)
+      toast.error('Failed to complete workout')
+    }
+  }
+
+  // Check completion status for all days by looking at recent completed workouts
+  const checkAllDaysCompletion = async () => {
+    if (!plan || !plan.schedule) return
+    
+    try {
+      // Fetch all completed workouts from the last 7 days
+      const today = new Date()
+      const sevenDaysAgo = new Date(today)
+      sevenDaysAgo.setDate(today.getDate() - 7)
+      
+      const fromDate = sevenDaysAgo.toISOString().split('T')[0]
+      const toDate = today.toISOString().split('T')[0]
+      
+      // Fetch all completed sessions in the date range
+      const completedSessions: Array<{ date: string; label: string }> = []
+      
+      for (let i = 0; i <= 7; i++) {
+        const checkDate = new Date(sevenDaysAgo)
+        checkDate.setDate(sevenDaysAgo.getDate() + i)
+        const dateStr = checkDate.toISOString().split('T')[0]
+        
+        const res = await fetch(`/api/progress/session/check-today?date=${dateStr}`)
+        const data = await res.json()
+        
+        if (data.success && data.completed && data.session) {
+          completedSessions.push({
+            date: dateStr,
+            label: data.session.plan_label
+          })
+        }
+      }
+      
+      // Match completed sessions to schedule days by checking if the plan label contains the day name
+      const newCompletedDays: Record<number, boolean> = {}
+      
+      plan.schedule.forEach(day => {
+        // Check if any completed session matches this day's label
+        const hasCompletedSession = completedSessions.some(session => {
+          // Match by checking if the session label contains the day name
+          // e.g., "GG PLAN - Saturday - Leg Day" contains "Saturday"
+          return session.label && session.label.includes(day.dayLabel.split(' ')[0])
+        })
+        
+        newCompletedDays[day.dayIndex] = hasCompletedSession
+      })
+      
+      setCompletedDays(newCompletedDays)
+    } catch (err) {
+      console.error('Failed to check completion:', err)
+    }
+  }
+
   // Reset circuit breaker on mount to ensure exercises can load
   useEffect(() => {
     resetCircuitBreaker();
@@ -194,6 +368,14 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
       loadPlan()
     }
   }, [user, authUser, params.id, router, loadPlan, authInitialized])
+
+  // Check all days completion status when plan loads
+  useEffect(() => {
+    if (plan && plan.status === 'completed') {
+      checkAllDaysCompletion()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan])
 
   if (isInitialLoad) {
     return (
@@ -459,15 +641,38 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
                                 <Badge variant="secondary">
                                   {day.totalTime ? `${day.totalTime} min` : 'Workout'}
                                 </Badge>
-                                <Sheet open={activeLoggerDay === day.dayIndex} onOpenChange={(open) => setActiveLoggerDay(open ? day.dayIndex : null)}>
+                                <Sheet 
+                                  open={activeLoggerDay === day.dayIndex} 
+                                  onOpenChange={async (open) => {
+                                    setActiveLoggerDay(open ? day.dayIndex : null)
+                                    if (open && !sessionId) {
+                                      // Start session when opening
+                                      await startWorkoutSession(day.dayLabel)
+                                      // Fetch histories for all exercises
+                                      const exercises = day.blocks?.flatMap((block, blockIdx) => 
+                                        block.exercises.map((ex, exIdx) => ({
+                                          exerciseId: ex.exerciseId || `manual-${blockIdx}-${exIdx}`,
+                                        }))
+                                      ) || []
+                                      exercises.forEach(ex => fetchExerciseHistory(ex.exerciseId))
+                                    }
+                                  }}
+                                >
                                   <SheetTrigger asChild>
                                     <Button 
                                       size="sm" 
-                                      variant={isToday ? "default" : "outline"}
-                                      className="cursor-pointer"
+                                      variant={completedDays[day.dayIndex] ? "default" : (isToday ? "default" : "outline")}
+                                      className={`cursor-pointer ${
+                                        completedDays[day.dayIndex] 
+                                          ? "bg-green-600 hover:bg-green-700 text-white" 
+                                          : ""
+                                      }`}
+                                      disabled={completedDays[day.dayIndex]}
                                     >
                                       <Dumbbell className="h-4 w-4 mr-2" />
-                                      {isToday ? "Start Today's Workout" : "Log Workout"}
+                                      {completedDays[day.dayIndex] 
+                                        ? "Completed Workout" 
+                                        : (isToday ? "Start Today's Workout" : "Log Workout")}
                                     </Button>
                                   </SheetTrigger>
                                   <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-4 sm:p-6 pb-24 sm:pb-6">
@@ -479,20 +684,22 @@ export default function WorkoutPlanPage({ params: paramsPromise }: WorkoutPlanPa
                                     </SheetHeader>
                                     <WorkoutLogger
                                       exercises={
-                                        day.blocks?.flatMap(block => 
-                                          block.exercises.map(ex => ({
-                                            exerciseId: ex.exerciseId || '',
+                                        day.blocks?.flatMap((block, blockIdx) => 
+                                          block.exercises.map((ex, exIdx) => ({
+                                            exerciseId: ex.exerciseId || `manual-${blockIdx}-${exIdx}`,
                                             name: ex.name,
                                             sets: ex.sets || 3,
                                             reps: ex.reps || '8-10',
                                           }))
                                         ) || []
                                       }
-                                      planLabel={`${plan.title} - ${day.dayLabel}`}
-                                      onComplete={() => {
-                                        setActiveLoggerDay(null)
-                                        toast.success('Workout completed! Great job! 💪')
-                                      }}
+                                      sessionId={sessionId}
+                                      sessionStartTime={sessionStartTime}
+                                      logs={sessionLogs}
+                                      histories={sessionHistories}
+                                      isStarting={isStartingSession}
+                                      onLogSet={handleLogSet}
+                                      onComplete={handleCompleteWorkout}
                                     />
                                   </SheetContent>
                                 </Sheet>

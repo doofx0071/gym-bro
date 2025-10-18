@@ -1,23 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, Circle, TrendingUp } from 'lucide-react';
+import { CheckCircle2, Circle, TrendingUp, Loader2 } from 'lucide-react';
 import type { ExerciseHistory } from '@/lib/types/workout-tracking';
+import { toast } from 'sonner';
 
 interface Exercise {
   exerciseId: string;
   name: string;
   sets: number;
-  reps: number | string; // could be "8-10" or "12"
-}
-
-interface WorkoutLoggerProps {
-  exercises: Exercise[];
-  planLabel?: string;
-  onComplete?: () => void;
+  reps: number | string;
 }
 
 interface SetLog {
@@ -27,84 +22,39 @@ interface SetLog {
   completed: boolean;
 }
 
-export function WorkoutLogger({ exercises, planLabel, onComplete }: WorkoutLoggerProps) {
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
-  const [logs, setLogs] = useState<Record<string, SetLog[]>>({});
-  const [histories, setHistories] = useState<Record<string, ExerciseHistory>>({});
+interface WorkoutLoggerProps {
+  exercises: Exercise[];
+  sessionId: string | null;
+  sessionStartTime: number | null;
+  logs: Record<string, SetLog[]>;
+  histories: Record<string, ExerciseHistory>;
+  isStarting?: boolean;
+  onLogSet: (exerciseId: string, exerciseName: string, setNumber: number, reps: number, weight: number) => Promise<void>;
+  onComplete?: () => Promise<void>;
+}
 
-  // Create session on mount
-  useEffect(() => {
-    startSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+export function WorkoutLogger({ 
+  exercises, 
+  sessionId, 
+  sessionStartTime,
+  logs, 
+  histories,
+  isStarting = false,
+  onLogSet,
+  onComplete 
+}: WorkoutLoggerProps) {
+  const [isCompleting, setIsCompleting] = useState(false);
 
-  async function startSession() {
-    setIsStarting(true);
+  async function handleComplete() {
+    if (!onComplete) return;
+    setIsCompleting(true);
     try {
-      const res = await fetch('/api/progress/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan_label: planLabel }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSessionId(data.session.id);
-        // Fetch history for all exercises (skip if no exerciseId)
-        await Promise.all(
-          exercises
-            .filter(ex => ex.exerciseId && ex.exerciseId.trim())
-            .map(ex => fetchHistory(ex.exerciseId))
-        );
-      }
+      await onComplete();
     } catch (err) {
-      console.error('Failed to start session:', err);
+      console.error('Failed to complete workout:', err);
+      toast.error('Failed to complete workout');
     } finally {
-      setIsStarting(false);
-    }
-  }
-
-  async function fetchHistory(exerciseId: string) {
-    if (!exerciseId || !exerciseId.trim()) return; // Skip if empty
-    try {
-      const res = await fetch(`/api/progress/history?exercise_id=${exerciseId}`);
-      const data = await res.json();
-      if (data.success) {
-        setHistories(prev => ({ ...prev, [exerciseId]: data.history }));
-      }
-    } catch (err) {
-      console.error('Failed to fetch history:', err);
-    }
-  }
-
-  async function logSet(exerciseId: string, exerciseName: string, setNumber: number, reps: number, weight: number) {
-    if (!sessionId) return;
-    try {
-      const res = await fetch('/api/progress/log-set', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          exercise_id: exerciseId,
-          exercise_name: exerciseName,
-          set_number: setNumber,
-          reps,
-          weight_kg: weight,
-          completed: true,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setLogs(prev => ({
-          ...prev,
-          [exerciseId]: [
-            ...(prev[exerciseId] || []),
-            { set_number: setNumber, reps, weight_kg: weight, completed: true },
-          ],
-        }));
-      }
-    } catch (err) {
-      console.error('Failed to log set:', err);
+      setIsCompleting(false);
     }
   }
 
@@ -114,44 +64,92 @@ export function WorkoutLogger({ exercises, planLabel, onComplete }: WorkoutLogge
     return hist.recent_sessions[0];
   }
 
+  // Calculate workout duration
+  function getWorkoutDuration() {
+    if (!sessionStartTime) return '0 min';
+    const durationMs = Date.now() - sessionStartTime;
+    const durationMin = Math.floor(durationMs / 60000);
+    return `${durationMin} min`;
+  }
+
+  // Calculate total sets logged
+  function getTotalSetsLogged() {
+    return Object.values(logs).reduce((sum, exerciseLogs) => sum + exerciseLogs.length, 0);
+  }
+
   if (isStarting) {
-    return <div className="text-center py-8 text-muted-foreground">Starting session...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Starting session...</p>
+      </div>
+    );
   }
 
   if (!sessionId) {
-    return <div className="text-center py-8 text-destructive">Failed to start session. Please refresh.</div>;
+    return (
+      <div className="text-center py-8">
+        <p className="text-destructive font-medium mb-2">Failed to start session</p>
+        <p className="text-sm text-muted-foreground">Please close and try again</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <CheckCircle2 className="w-4 h-4 text-green-500" />
-        <span>Session active • Track your sets below</span>
-      </div>
+      {/* Session Status Header */}
+      <Card className="bg-muted/50">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+              <span className="text-sm font-medium">Session Active</span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>{getWorkoutDuration()}</span>
+              <span>•</span>
+              <span>{getTotalSetsLogged()} sets logged</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {exercises.map((exercise, index) => {
-        const exerciseKey = exercise.exerciseId || `exercise-${index}`;
+      {/* Exercise Loggers */}
+      {exercises.map((exercise) => {
         const lastWorkout = getLastWorkout(exercise.exerciseId);
         const currentLogs = logs[exercise.exerciseId] || [];
         const setsCompleted = currentLogs.length;
 
         return (
           <ExerciseLogger
-            key={exerciseKey}
+            key={exercise.exerciseId}
             exercise={exercise}
             lastWorkout={lastWorkout}
             currentLogs={currentLogs}
             setsCompleted={setsCompleted}
             onLogSet={(setNum, reps, weight) =>
-              logSet(exercise.exerciseId || `manual-${index}`, exercise.name, setNum, reps, weight)
+              onLogSet(exercise.exerciseId, exercise.name, setNum, reps, weight)
             }
           />
         );
       })}
 
+      {/* Complete Workout Button */}
       {onComplete && (
-        <Button onClick={onComplete} className="w-full" size="lg">
-          Complete Workout
+        <Button 
+          onClick={handleComplete} 
+          className="w-full cursor-pointer" 
+          size="lg"
+          disabled={isCompleting}
+        >
+          {isCompleting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Completing...
+            </>
+          ) : (
+            'Complete Workout'
+          )}
         </Button>
       )}
     </div>
@@ -249,7 +247,7 @@ function ExerciseLogger({ exercise, lastWorkout, currentLogs, setsCompleted, onL
                 onClick={handleLog} 
                 disabled={!reps || (needsWeight && !weight)} 
                 size="sm"
-                className="h-10 sm:h-9 px-3 sm:px-4"
+                className="h-10 sm:h-9 px-3 sm:px-4 cursor-pointer"
               >
                 Log
               </Button>

@@ -216,7 +216,25 @@ vercel env pull .env.local
 
 ## Recent Updates (October 2025)
 
-### 🔥 Latest Fixes (October 16, 2025)
+### 🔥 Latest Fixes: Workout Completion Detection (October 2025)
+- **Completion Status Bug Fixed**: Past day workout completions now correctly show as "Completed Workout" in the UI
+- **API Enhancement**: check-today endpoint accepts optional `date` query parameter for checking any day
+- **Frontend Logic Rewrite**: Changed from calculating dates per weekday to scanning past 7 days of completed sessions
+- **Day Matching Algorithm**: Matches completed sessions to scheduled days by checking if session label contains day name
+- **Timezone Robust**: No longer dependent on date calculations that could be off by one day
+- **Code Cleanup**: Removed all debug logging for cleaner code
+- **UI States**: Workout plan buttons correctly reflect completion status for all days
+
+### ✅ Phase 5.2: Workout Progress Tracking MVP Complete (October 2025)
+- **Database Schema**: `workout_sessions` and `workout_set_logs` tables with `is_completed` and `completed_at` tracking
+- **Logging System**: Real-time set logging with reps, weight, and RPE
+- **History Display**: View previous workout performance for progressive overload
+- **API Endpoints**: Session creation, set logging, history retrieval, completion check with date support
+- **WorkoutLogger Component**: Complete logging UI with optimistic updates
+- **Mobile First**: Number inputs, large touch targets, responsive design
+- **Demo Page**: `/workout-logger-test` with sample exercises
+
+### 🔥 Previous Fixes (October 16, 2025)
 - **ExerciseDB API Integration**: Fixed array response handling for V1 API
 - **Circuit Breaker Pattern**: Implemented with reset for robust API calls
 - **Pagination**: Fixed exercises page with 25 items per page limit
@@ -311,10 +329,10 @@ See `docs/` and `mds/` folders for detailed documentation:
 
 ---
 
-**Status:** Production Ready + Phase 4 Complete (USDA Nutrition Validation)  
-**Last Updated:** October 16, 2025  
-**MVP Progress:** 90% Complete  
-**Next Phase:** Phase 5 - Advanced features (progress tracking, Filipino food database, social features, plan editing)
+**Status:** Production Ready + Phase 5.2 Complete (Progress Tracking MVP + Completion Detection)  
+**Last Updated:** October 2025  
+**MVP Progress:** 93% Complete (Phase 5.2 done)  
+**Next Phase:** Phase 5.3+ - Advanced features (Filipino food database, social features, advanced plan editing)
 
 ## AI Usage Quick Start
 

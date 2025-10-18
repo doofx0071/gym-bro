@@ -7,6 +7,8 @@ export interface WorkoutSession {
   plan_label: string | null;
   duration_min: number | null;
   notes: string | null;
+  completed_at: string | null;
+  is_completed: boolean;
   created_at: string;
 }
 
@@ -72,4 +74,14 @@ export interface ExerciseHistory {
 export interface GetHistoryResponse {
   success: boolean;
   history: ExerciseHistory;
+}
+
+export interface CompleteSessionRequest {
+  duration_min?: number;
+  notes?: string;
+}
+
+export interface CompleteSessionResponse {
+  success: boolean;
+  session: WorkoutSession;
 }
